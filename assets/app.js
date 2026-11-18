@@ -73,7 +73,8 @@
   app.innerHTML =
     /* ---------- 首頁 ---------- */
     '<section id="s-home" class="screen"><div class="wrap">' +
-      '<img class="kv" src="assets/kv.webp" alt="NISSAN E級玩家｜' + CFG.EVENT_SLOGAN + '">' +
+      '<div class="kv-wrap"><img class="kv" src="assets/kv.webp" alt="NISSAN E級玩家｜' + CFG.EVENT_SLOGAN + '">' +
+        '<div class="kv-logo" id="kv-logo" aria-hidden="true"></div></div>' +
       '<div class="home-body">' +
         '<div class="team-badge"><div class="team-badge__icon">' + PX.svg(PX.cells(TEAM.icon || 'BOLT', 0, 0, TEAM.textOnColor)) + '</div>' +
           '<div class="team-badge__text"><div class="team-badge__en">TEAM ' + TEAM.en.toUpperCase() + '</div>' +
@@ -236,15 +237,32 @@
     else openMission();
   });
 
-  /* 長按 NISSAN logo 3 秒 → 工作人員重設進度 */
+  /* 工作人員重設進度：長按 NISSAN logo 2 秒，或 3 秒內連點 5 下
+   * 首頁最下方的 logo、主視覺右上角的 logo 都可以 */
   (function () {
-    var logo = $('#logo'), timer = null;
-    function start(e) { e.preventDefault(); timer = setTimeout(openReset, 2500); }
-    function cancel() { clearTimeout(timer); }
-    logo.addEventListener('touchstart', start, { passive: false });
-    logo.addEventListener('mousedown', start);
-    ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(function (ev) { logo.addEventListener(ev, cancel); });
-    logo.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    var timer = null, taps = [], busy = false;
+    function fire() { if (busy) return; busy = true; clear(); openReset(); setTimeout(function () { busy = false; }, 800); }
+    function clear() {
+      clearTimeout(timer);
+      document.querySelectorAll('.staff-hot').forEach(function (el) { el.classList.remove('holding'); });
+    }
+    function bind(el) {
+      el.classList.add('staff-hot');
+      function start(e) {
+        if (e.cancelable) e.preventDefault();
+        el.classList.add('holding');
+        timer = setTimeout(fire, 2000);
+        var now = Date.now();
+        taps = taps.filter(function (t) { return now - t < 3000; }); taps.push(now);
+        if (taps.length >= 5) { taps = []; fire(); }
+      }
+      el.addEventListener('touchstart', start, { passive: false });
+      el.addEventListener('mousedown', start);
+      ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(function (ev) { el.addEventListener(ev, clear); });
+      el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    }
+    bind($('#logo'));
+    bind($('#kv-logo'));
   })();
 
   function openReset() {

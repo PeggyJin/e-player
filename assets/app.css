@@ -409,3 +409,16 @@ img, svg { display: block; }
 /* 錄影進度放在下方，不擋濾鏡標題 */
 .fcam .rec-bar { top: auto; bottom: calc(var(--safe-b) + 136px); }
 .fcam .ftop { top: auto; bottom: calc(var(--safe-b) + 160px); padding: 0; }
+
+/* 工作人員重設：logo 熱區與按住時的進度提示 */
+.kv-wrap { position: relative; }
+.kv-wrap .kv { -webkit-touch-callout: none; pointer-events: none; }
+.kv-logo { position: absolute; right: 2%; top: 2%; width: 18%; height: 24%; touch-action: none; -webkit-touch-callout: none; }
+.staff-hot { -webkit-user-select: none; user-select: none; }
+.footer__logo.staff-hot { position: relative; }
+.staff-hot::after {
+  content: ''; position: absolute; left: 0; bottom: -8px; height: 5px; width: 0;
+  background: var(--red); pointer-events: none;
+}
+.staff-hot.holding::after { width: 100%; transition: width 2s linear; }
+.footer__logo { padding: 6px 0; }
