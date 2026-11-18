@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E級玩家｜三隊 QR code（列印用）</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  body { -webkit-user-select: text; user-select: text; background: #f4f2ee; }
+  .bar { max-width: 900px; margin: 0 auto; padding: 20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .bar h1 { font-size: 22px; margin: 0; flex: 1 1 100%; }
+  .bar .pbtn { width: auto; min-height: 48px; font-size: 16px; box-shadow: 4px 4px 0 var(--black); }
+  .note { max-width: 900px; margin: 0 auto 10px; padding: 0 20px; font-size: 14px; color: #555; }
+  .note.warn { color: var(--red); font-weight: 700; }
+  .sheet-page { max-width: 900px; margin: 0 auto; padding: 10px 20px 40px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .card { background: #fff; border: 5px solid var(--black); box-shadow: 6px 6px 0 var(--champ); padding: 0 0 16px; text-align: center; position: relative; break-inside: avoid; }
+  .card__head { padding: 12px 10px; color: var(--t-text); background: var(--t); border-bottom: 5px solid var(--black); }
+  .card__en { font-family: var(--pixel); font-size: 10px; letter-spacing: 1px; }
+  .card__zh { font-size: 30px; font-weight: 900; font-style: italic; line-height: 1.3; }
+  .card__task { font-size: 15px; font-weight: 700; margin: 12px 10px 4px; }
+  .card__task b { background: var(--t); color: var(--t-text); padding: 0 6px; border: 2px solid var(--black); }
+  .qr { width: 78%; margin: 10px auto 6px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
+  .qr svg { width: 100%; height: 100%; }
+  .qr.empty { border: 3px dashed #bbb; color: #999; font-size: 14px; padding: 12px; }
+  .url { font-size: 10px; color: #777; word-break: break-all; padding: 0 10px; }
+  .hint { font-size: 12px; margin-top: 8px; color: #333; }
+  .logo { width: 54px; margin: 10px auto 0; }
+  @media (max-width: 700px) { .sheet-page { grid-template-columns: 1fr; max-width: 420px; } }
+  /* 每隊一頁模式 */
+  body.big .sheet-page { grid-template-columns: 1fr; max-width: 560px; }
+  body.big .card__zh { font-size: 52px; }
+  body.big .card__task { font-size: 22px; }
+  body.big .hint { font-size: 18px; }
+  body.big .url { font-size: 13px; }
+  @media print {
+    body { background: #fff; }
+    .bar, .note { display: none; }
+    .sheet-page { padding: 0; gap: 10mm; }
+    .card { box-shadow: none; }
+    body.big .card { page-break-after: always; height: 270mm; display: flex; flex-direction: column; justify-content: center; }
+    body.big .sheet-page { max-width: none; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @page { size: A4; margin: 12mm; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>NISSAN E級玩家｜三隊 QR code</h1>
+  <button class="pbtn pbtn--white" id="mode">切換：每隊一頁（大張）</button>
+  <button class="pbtn pbtn--red" onclick="window.print()">🖨 列印</button>
+</div>
+<p class="note" id="note"></p>
+<div class="sheet-page" id="cards"></div>
+
+<script src="config.js"></script>
+<script src="assets/vendor/qrcode.js"></script>
+<script>
+(function () {
+  var CFG = window.EPLAYER_CONFIG;
+  var here = location.href.split('#')[0].split('?')[0];
+  var canDerive = /^https:/.test(here) && here.indexOf('qrcodes.html') > -1;
+  var note = document.getElementById('note');
+  var anyMissing = false, derived = false;
+
+  var html = '';
+  ['yellow', 'red', 'green'].forEach(function (id) {
+    var t = CFG.TEAMS[id];
+    var url = t.url;
+    if (!url && canDerive) { url = here.replace('qrcodes.html', id + '.html'); derived = true; }
+    var qrHtml;
+    if (url) {
+      // 加上 openExternalBrowser=1：用 LINE 掃描時會自動改用外部瀏覽器開啟（相機才能用）
+      var full = url + (url.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
+      var qr = qrcode(0, 'M'); qr.addData(full); qr.make();
+      qrHtml = '<div class="qr">' + qr.createSvgTag({ cellSize: 8, margin: 2, scalable: true }) + '</div><div class="url">' + full + '</div>';
+    } else {
+      anyMissing = true;
+      qrHtml = '<div class="qr empty">尚未設定網址<br>請在 config.js 的 TEAMS.' + id + '.url 填入</div>';
+    }
+    html += '<div class="card" style="--t:' + t.color + ';--t-text:' + t.textOnColor + '">' +
+      '<div class="card__head"><div class="card__en">TEAM ' + t.en.toUpperCase() + '</div><div class="card__zh">' + t.zh + '</div></div>' +
+      '<div class="card__task">任務：找到 ' + CFG.MISSION_COUNT + ' 個 <b>' + t.colorName + '</b> 海廢</div>' +
+      qrHtml +
+      '<div class="hint">用手機相機掃描，以 Safari／Chrome 開啟</div>' +
+      '<img class="logo" src="assets/nissan-logo.png" alt="NISSAN"></div>';
+  });
+  document.getElementById('cards').innerHTML = html;
+
+  if (anyMissing) { note.className = 'note warn'; note.textContent = '⚠ 還沒有網址。部署到 GitHub Pages 後，用網址打開這一頁就會自動產生；或在 config.js 填入各隊網址。'; }
+  else if (derived) note.textContent = '已依照這一頁的網址自動產生三隊連結。列印前請先用手機掃描確認一次。';
+  else note.textContent = '使用 config.js 中設定的網址。列印前請先用手機掃描確認一次。';
+
+  var big = false;
+  document.getElementById('mode').onclick = function () {
+    big = !big; document.body.classList.toggle('big', big);
+    this.textContent = big ? '切換：三隊一頁' : '切換：每隊一頁（大張）';
+  };
+})();
+</script>
+</body>
+</html>
