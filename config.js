@@ -19,7 +19,7 @@ window.EPLAYER_CONFIG = {
   /* ---------- 雲端上傳（Google Apps Script 網址） ----------
    * 部署 Apps Script 後，把「網頁應用程式網址」（.../exec 結尾）貼在引號內。
    * 留空 '' 代表不上傳（測試用），遊戲仍可正常進行。 */
-  UPLOAD_URL: '',
+  UPLOAD_URL: 'https://peggyjin.github.io/e-player/',
 
   /* ---------- 任務設定 ---------- */
   MISSION_COUNT: 3,          // 要找幾個（電量條格數）
