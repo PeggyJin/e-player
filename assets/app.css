@@ -400,6 +400,12 @@ img, svg { display: block; }
 }
 
 /* 微調 */
-.fcam .cam__top .icon-btn { width: 42px; height: 42px; flex-basis: 42px; font-size: 18px; border-width: 3px; opacity: .9; }
+.ftop { justify-content: center; }
+.frow { gap: 10px; }
+.frow .fclose { width: 46px; height: 46px; flex: 0 0 46px; font-size: 18px; border-width: 3px; }
+.frow .mode-toggle, .frow .flip { width: 88px; }
 .done .footer { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; }
 .done { padding-bottom: 120px; }
+/* 錄影進度放在下方，不擋濾鏡標題 */
+.fcam .rec-bar { top: auto; bottom: calc(var(--safe-b) + 136px); }
+.fcam .ftop { top: auto; bottom: calc(var(--safe-b) + 160px); padding: 0; }

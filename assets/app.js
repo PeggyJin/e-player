@@ -138,12 +138,10 @@
     '<section id="s-filter" class="screen"><div class="cam fcam" id="fcam">' +
       '<video class="src-video" id="fvideo" playsinline muted autoplay></video>' +
       '<canvas class="live" id="fcanvas" width="720" height="1280"></canvas>' +
-      '<div class="cam__top">' +
-        '<button class="icon-btn" id="f-close" aria-label="返回">✕</button><span class="spacer"></span>' +
-        '<span class="rec-time" id="rec-time"></span>' +
-      '</div>' +
+      '<div class="cam__top ftop"><span class="rec-time" id="rec-time"></span></div>' +
       '<div class="rec-bar" id="rec-bar"><span></span></div>' +
       '<div class="cam__bottom frow">' +
+        '<button class="icon-btn fclose" id="f-close" aria-label="返回">✕</button>' +
         '<div class="mode-toggle" id="f-mode"><button data-mode="photo" class="on">拍照</button><button data-mode="video">錄影</button></div>' +
         '<button class="shutter fshutter" id="f-shutter" aria-label="拍攝"></button>' +
         '<button class="icon-btn flip" id="f-flip" aria-label="切換鏡頭"><span>⟲</span><small>翻轉</small></button>' +
@@ -158,7 +156,7 @@
       '<div class="preview__media" id="p-media"></div>' +
       '<div class="preview__bar"><p class="preview__tip" id="p-tip"></p>' +
         '<div class="btn-row"><button class="pbtn pbtn--white" id="p-retake">重拍</button>' +
-        '<button class="pbtn pbtn--red" id="p-save">儲存</button></div></div>' +
+        '<button class="pbtn pbtn--red" id="p-save">⬇ 下載</button></div></div>' +
     '</div></section>' +
 
     /* ---------- 完成頁 ---------- */
@@ -696,12 +694,12 @@
   /* =========================================================
    *  濾鏡（三隊共用同一款）
    * ========================================================= */
-  var FONT_ZH = '"Noto Sans TC", "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif';
+  var FONT_ZH = '"Noto Sans TC", "PingFang TC", "Heiti TC", "Microsoft JhengHei", "Noto Sans CJK TC", sans-serif';
   var logoImg = new Image();
   logoImg.src = 'assets/nissan-logo.png';
   var fontsReady = (function () {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
-    var txt = CFG.EVENT_TITLE + CFG.EVENT_SLOGAN + CFG.EVENT_DATE_TEXT + CFG.EVENT_PLACE_TEXT;
+    var txt = CFG.FILTER_TITLE || '級玩家';
     return Promise.race([
       Promise.all([document.fonts.load('900 100px "Noto Sans TC"', txt), document.fonts.load('700 50px "Noto Sans TC"', txt)]),
       new Promise(function (r) { setTimeout(r, 3000); })
@@ -716,82 +714,91 @@
     ctx.closePath(); ctx.fill();
   }
 
-  // 以 1080×1920 為基準畫濾鏡，再依實際尺寸縮放
+  function tinted(img, color, w, h) {
+    var c = document.createElement('canvas'); c.width = Math.ceil(w); c.height = Math.ceil(h);
+    var x = c.getContext('2d'); x.drawImage(img, 0, 0, w, h);
+    x.globalCompositeOperation = 'source-in'; x.fillStyle = color; x.fillRect(0, 0, w, h); return c;
+  }
+  // 去背 logo；glow=true 時加白色外框，深色照片上也看得清楚
+  function drawLogo(ctx, img, x, y, w, glow) {
+    var h = w * img.naturalHeight / img.naturalWidth;
+    if (glow) {
+      var wl = tinted(img, '#fff', w, h);
+      for (var a = 0; a < Math.PI * 2; a += Math.PI / 8) ctx.drawImage(wl, x + Math.cos(a) * 6, y + Math.sin(a) * 6, w, h);
+    }
+    ctx.drawImage(img, x, y, w, h);
+  }
+
+  /* 濾鏡版型（三隊共用）：以 1080×1920 為基準
+   * 上方：像素 E ＋「級玩家」整組斜放、微破框；右上去背 NISSAN logo
+   * 左右與下方：黑色細框、紅色細線、角落斜向色塊、螢光綠線 */
   function drawOverlay(ctx, W, H) {
-    var P = PX.PAL;
     ctx.save();
     ctx.scale(W / 1080, H / 1920);
+    var P = PX.PAL;
+    // ---------- 上方標題區（透明，直接疊在照片上） ----------
+    // 右上斜線
+    para(ctx, 850, 158, 230, 14, P.R);
+    para(ctx, 900, 182, 180, 6, P.C);
+    para(ctx, 960, 198, 120, 4, P.K);
+    // NISSAN logo（去背）
+    if (logoImg.complete && logoImg.naturalWidth) drawLogo(ctx, logoImg, 924, 30, 120, true);
 
-    // 右上斜向色塊
-    para(ctx, 600, 0, 520, 30, P.R);
-    para(ctx, 700, 44, 260, 12, P.C);
-    para(ctx, 560, 70, 200, 6, P.K);
-
-    // NISSAN logo（白底）
-    ctx.fillStyle = 'rgba(255,255,255,0.92)';
-    ctx.fillRect(870, 96, 176, 150);
-    if (logoImg.complete && logoImg.naturalWidth) {
-      var lw = 140, lh = lw * logoImg.naturalHeight / logoImg.naturalWidth;
-      ctx.drawImage(logoImg, 870 + (176 - lw) / 2, 96 + (150 - lh) / 2, lw, lh);
-    }
-
-    // 左上：像素 E＋碎塊＋閃電＋電量條＋訊號波
-    PX.draw(ctx, PX.cells('E'), 40, 60, 19, { shadow: { dx: 0.6, dy: 0.6 } });
-    PX.draw(ctx, PX.cells('E_CHIPS'), 224, 60, 13);
-    PX.draw(ctx, PX.cells('BOLT'), 372, 70, 9);
-    ctx.fillStyle = P.K; ctx.fillRect(372, 200, 100, 5); ctx.fillRect(467, 154, 5, 51);
-    PX.drawBattery(ctx, 472, 124, 180, 60, 5, 5, P.G);
-    PX.draw(ctx, PX.cells('SIGNAL'), 690, 100, 6);
-    PX.draw(ctx, PX.cells('SPARK'), 340, 260, 8);
-
-    // 右側棋盤格
-    PX.draw(ctx, PX.checker(8, 6, true), 940, 1380, 14);
-
-    // 底部海浪＋沙灘
-    var wave = PX.waveBand(90, 3);
-    PX.draw(ctx, wave.cells, 0, 1920 - wave.h * 12, 12);
-    PX.draw(ctx, PX.cells('BOTTLE'), 820, 1842, 6);
-    PX.draw(ctx, PX.cells('CAP'), 872, 1886, 5);
-    PX.draw(ctx, PX.cells('BAG'), 920, 1840, 6.5);
-    PX.draw(ctx, PX.cells('SPARK'), 1010, 1846, 5);
-
-    // 標題「E級玩家」：黑色粗斜體＋香檳陰影＋白邊＋紅色斜切
+    // 標題組：像素 E ＋「級玩家」＋點綴，整組斜放、往上破框
+    var TILT = -0.09, GX = 24, GY = 58;
     ctx.save();
-    ctx.translate(70, 1600);
-    ctx.transform(1, 0, -0.2, 1, 0, 0);
-    ctx.font = '900 190px ' + FONT_ZH;
-    ctx.textBaseline = 'alphabetic';
-    ctx.lineJoin = 'round';
-    ctx.fillStyle = P.C; ctx.fillText(CFG.EVENT_TITLE, 12, 12);
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 26; ctx.strokeText(CFG.EVENT_TITLE, 0, 0);
-    ctx.fillStyle = P.K; ctx.fillText(CFG.EVENT_TITLE, 0, 0);
-    var tw = ctx.measureText(CFG.EVENT_TITLE).width;
+    ctx.translate(GX, GY); ctx.rotate(TILT);
+    var cell = 16, ew = 10 * cell, eh = 12 * cell;
+    PX.draw(ctx, PX.cells('E'), 0, 0, cell, { shadow: { dx: 0.5, dy: 0.5 } });
+    var title = CFG.FILTER_TITLE || '級玩家', tx = ew + 16, SK = 0.2;
+    var fs = 200; ctx.font = '900 ' + fs + 'px ' + FONT_ZH;
+    var m = ctx.measureText(title), gh = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+    fs = fs * (eh * 0.98) / gh; ctx.font = '900 ' + fs + 'px ' + FONT_ZH; m = ctx.measureText(title);
+    var baseY = eh - m.actualBoundingBoxDescent, tw = m.width, ta = m.actualBoundingBoxAscent, tTop = baseY - ta;
+    ctx.save();
+    ctx.translate(tx, baseY); ctx.transform(1, 0, -SK, 1, 0, 0); ctx.lineJoin = 'round';
+    ctx.fillStyle = P.C; ctx.fillText(title, 8, 8);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 20; ctx.strokeText(title, 0, 0); // 白邊
+    ctx.fillStyle = P.K; ctx.fillText(title, 0, 0);
     ctx.restore();
-    para(ctx, 40, 1430, 70, 18, P.R, 20);
-    para(ctx, 60 + tw * 0.98, 1470, 22, 90, P.R, 30);
-
-    // 紅色斜向色帶＋白色標語
-    ctx.save();
-    ctx.translate(540, 1712);
-    ctx.rotate(-0.045);
-    para(ctx, -500, -54, 990, 108, P.R, 34);
-    para(ctx, -506, 46, 990, 12, P.D, 6);
-    ctx.font = 'italic 900 62px ' + FONT_ZH;
-    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(CFG.EVENT_SLOGAN, 6, 2);
-    // 螢光綠斜線
-    para(ctx, -490, 74, 520, 16, P.G, 12);
+    // 紅色斜切
+    para(ctx, tx + 2, tTop - 26, 60, 14, P.R, 18);
+    para(ctx, tx + tw + SK * ta * 0.4 + 2, tTop + 16, 16, 76, P.R, 22);
+    // 下方：棋盤格、螢光綠斜線、閃電＋電量條＋訊號
+    PX.draw(ctx, PX.checker(8, 3, true), 0, eh + 16, 11);
+    para(ctx, tx + 16, eh + 18, 300, 11, P.G, 9);
+    var bx = tx + tw - 250, by = eh + 10;
+    PX.draw(ctx, PX.cells('BOLT'), bx, by, 5);
+    PX.drawBattery(ctx, bx + 52, by + 14, 116, 38, 5, 5, P.G);
+    PX.draw(ctx, PX.cells('SIGNAL'), bx + 188, by + 2, 4);
     ctx.restore();
 
-    // 日期地點
-    var dateTxt = CFG.EVENT_DATE_TEXT + '  ' + CFG.EVENT_PLACE_TEXT;
-    ctx.font = '700 40px ' + FONT_ZH;
-    var dw = ctx.measureText(dateTxt).width + 40;
-    ctx.fillStyle = '#fff'; ctx.fillRect(1040 - dw, 1762, dw, 62);
-    ctx.strokeStyle = P.K; ctx.lineWidth = 5; ctx.strokeRect(1040 - dw, 1762, dw, 62);
-    ctx.fillStyle = P.K; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-    ctx.fillText(dateTxt, 1040 - dw + 20, 1795);
-
+    // ---------- 左右與下方：線條 ----------
+    var inset = 30, lw = 6, topL = 380, topR = 290;
+    // 左右直線（黑）＋內側細紅線
+    ctx.fillStyle = P.K;
+    ctx.fillRect(inset, topL, lw, 1920 - inset - topL);
+    ctx.fillRect(1080 - inset - lw, topR, lw, 1920 - inset - topR);
+    ctx.fillRect(inset, 1920 - inset - lw, 1080 - inset * 2, lw);
+    ctx.fillStyle = P.R;
+    ctx.fillRect(inset + 14, topL + 60, 4, 1920 - inset - topL - 160);
+    ctx.fillRect(1080 - inset - 18, topR + 60, 4, 1920 - inset - topR - 160);
+    // 線段起點的像素方塊
+    [[inset - 4, topL - 14], [1080 - inset - lw - 4, topR - 14]].forEach(function (p) {
+      ctx.fillStyle = P.R; ctx.fillRect(p[0], p[1], 14, 14);
+    });
+    // 左下角斜向色塊
+    para(ctx, 0, 1790, 230, 22, P.R, 22);
+    para(ctx, 20, 1824, 150, 9, P.C, 9);
+    para(ctx, 0, 1846, 110, 5, P.K, 5);
+    // 右下角斜向色塊＋螢光綠
+    para(ctx, 830, 1790, 250, 22, P.R, 22);
+    para(ctx, 900, 1824, 180, 9, P.C, 9);
+    para(ctx, 960, 1846, 120, 5, P.K, 5);
+    para(ctx, 380, 1868, 320, 10, P.G, 10);
+    // 右側棋盤格點綴
+    PX.draw(ctx, PX.checker(5, 4, true), 990, 1150, 12);
+    PX.draw(ctx, PX.cells('SPARK'), 60, 1180, 7);
     ctx.restore();
   }
 
@@ -960,8 +967,8 @@
       ? '<img src="' + previewUrl + '" alt="濾鏡照片">'
       : '<video src="' + previewUrl + '" playsinline autoplay loop muted controls></video>';
     $('#p-tip').textContent = IS_IOS
-      ? '按「儲存」後，在選單中點「' + (result.kind === 'photo' ? '儲存影像' : '儲存影片') + '」就會存進照片 App'
-      : '按「儲存」就會下載到手機';
+      ? '按「下載」後，在選單中點「' + (result.kind === 'photo' ? '儲存影像' : '儲存影片') + '」就會存進照片 App'
+      : '按「下載」就會存到手機';
   }
   $('#p-retake').onclick = function () { openFilter(); };
   $('#p-save').onclick = function () {
@@ -975,18 +982,22 @@
 
     var canShare = file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] });
     if (IS_IOS && canShare) {
-      navigator.share({ files: [file] }).then(function () { show('done'); })
-        .catch(function (e) { if (e && e.name !== 'AbortError') download(name); });
+      navigator.share({ files: [file] }).then(backToFilter)
+        .catch(function (e) { if (e && e.name !== 'AbortError') { download(name); backToFilter(); } });
     } else {
       download(name);
-      setTimeout(function () { show('done'); }, 1200);
+      setTimeout(backToFilter, 800);
     }
   };
+  // 下載後直接回到濾鏡相機，可以繼續拍
+  function backToFilter() {
+    openFilter();
+    toast('已儲存！' + CFG.TEXT.doneMessage, 4000);
+  }
   function download(name) {
     var a = document.createElement('a');
     a.href = previewUrl; a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
-    toast('已下載，可以到「下載」或相簿查看');
   }
 
   $('#d-again').onclick = function () { openFilter(); };
