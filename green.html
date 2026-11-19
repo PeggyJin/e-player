@@ -6,14 +6,20 @@
 <meta name="theme-color" content="#ffffff">
 <meta name="format-detection" content="telephone=no">
 <title>E級玩家｜生態E隊</title>
-<link rel="stylesheet" href="assets/app.css">
+<script>
+  // 每分鐘換一次版本號，手機就不會一直用暫存的舊程式
+  window.EPLAYER_V = Math.floor(Date.now() / 60000);
+  document.write('<link rel="stylesheet" href="assets/app.css?v=' + window.EPLAYER_V + '">');
+</script>
 </head>
 <body>
 <!-- 這個檔案只決定「是哪一隊」，其他內容都在共用檔案裡 -->
 <script>window.EPLAYER_TEAM = 'green';</script>
 <div id="app"></div>
-<script src="config.js"></script>
-<script src="assets/pixel.js"></script>
-<script src="assets/app.js"></script>
+<script>
+  ['config.js', 'assets/pixel.js', 'assets/app.js'].forEach(function (src) {
+    document.write('<script src="' + src + '?v=' + window.EPLAYER_V + '"><\/script>');
+  });
+</script>
 </body>
 </html>
