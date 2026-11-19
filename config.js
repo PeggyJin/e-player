@@ -43,7 +43,7 @@ window.EPLAYER_CONFIG = {
    *   vMax ：最高亮度（0～1）。反光過曝的點不算
    * 框內符合顏色的點 ≥ MIN_RATIO（比例）就算成功。
    * 現場太難過關 → 把 MIN_RATIO 調低（例如 0.08）；太容易過關 → 調高（例如 0.18）。 */
-  COLOR_RULES: {
+     COLOR_RULES: {
     MIN_RATIO: 0.12,
     yellow: { hue: [[38, 72]],             sMin: 0.36, vMin: 0.35, vMax: 1.0 },
     red:    { hue: [[0, 18], [332, 360]],  sMin: 0.32, vMin: 0.22, vMax: 1.0 },
