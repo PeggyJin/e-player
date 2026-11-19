@@ -1,0 +1,424 @@
+/* =========================================================
+ *  E級玩家 共用樣式（三隊共用；隊色由 --team 變數決定）
+ * ========================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Press+Start+2P&display=swap');
+
+:root {
+  --red: #D7191F;
+  --red-dk: #8B1E19;
+  --champ: #C8BFB0;
+  --green: #64EA00;
+  --black: #1C1C1C;
+  --gray: #E3E3E3;
+  --team: #D7191F;
+  --team-text: #FFFFFF;
+  --font: 'Noto Sans TC', 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei', sans-serif;
+  --pixel: 'Press Start 2P', 'Courier New', monospace;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; background: #fff; color: var(--black); }
+body {
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -webkit-user-select: none; user-select: none;
+  overscroll-behavior: none;
+}
+button { font-family: inherit; }
+img, svg { display: block; }
+
+.screen { display: none; min-height: 100vh; min-height: 100dvh; }
+.screen.active { display: block; }
+.wrap { max-width: 520px; margin: 0 auto; position: relative; }
+
+/* ---------- 像素按鈕 ---------- */
+.pbtn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-height: 64px;
+  padding: 14px 18px;
+  font-size: 22px; font-weight: 900; letter-spacing: 1px;
+  color: var(--team-text); background: var(--team);
+  border: 4px solid var(--black); border-radius: 0;
+  box-shadow: 6px 6px 0 var(--black);
+  cursor: pointer;
+  transition: transform .06s, box-shadow .06s;
+  position: relative;
+}
+.pbtn:active, .pbtn.is-pressed { transform: translate(6px, 6px); box-shadow: 0 0 0 var(--black); }
+.pbtn[disabled] { opacity: .45; pointer-events: none; }
+.pbtn--red { background: var(--red); color: #fff; }
+.pbtn--white { background: #fff; color: var(--black); }
+.pbtn--black { background: var(--black); color: #fff; box-shadow: 6px 6px 0 var(--champ); }
+.pbtn--black:active { box-shadow: 0 0 0 var(--champ); }
+.pbtn--sm { min-height: 50px; font-size: 18px; padding: 8px 14px; box-shadow: 4px 4px 0 var(--black); }
+.pbtn--sm:active { transform: translate(4px, 4px); }
+.btn-row { display: flex; gap: 14px; }
+.btn-row > * { flex: 1; }
+.stack > * + * { margin-top: 18px; }
+
+/* ---------- 斜向色塊裝飾 ---------- */
+.stripes { position: absolute; pointer-events: none; width: 160px; height: 90px; overflow: hidden; }
+.stripes i { position: absolute; display: block; height: 14px; transform: skewX(-40deg); }
+.stripes--tr { top: 0; right: -20px; }
+.stripes--tr i:nth-child(1) { top: 10px; right: 0; width: 110px; background: var(--red); }
+.stripes--tr i:nth-child(2) { top: 32px; right: 30px; width: 70px; height: 8px; background: var(--champ); }
+.stripes--tr i:nth-child(3) { top: 48px; right: -10px; width: 90px; height: 4px; background: var(--black); }
+.stripes--bl { bottom: 0; left: -20px; }
+.stripes--bl i:nth-child(1) { bottom: 10px; left: 0; width: 120px; background: var(--red); }
+.stripes--bl i:nth-child(2) { bottom: 32px; left: 30px; width: 80px; height: 8px; background: var(--champ); }
+.stripes--bl i:nth-child(3) { bottom: 48px; left: 10px; width: 60px; height: 4px; background: var(--black); }
+
+/* ---------- 首頁 ---------- */
+.kv { width: 100%; height: auto; aspect-ratio: 1671 / 941; background: #fff; }
+.home-body { padding: 6px 20px 0; }
+
+.team-badge {
+  display: flex; align-items: stretch;
+  margin: 4px 6px 0 2px;
+  transform: skewX(-10deg);
+  border: 4px solid var(--black);
+  box-shadow: 6px 6px 0 var(--champ);
+  background: var(--black);
+}
+.team-badge__icon {
+  width: 72px; flex: 0 0 72px;
+  background: var(--team); color: var(--team-text);
+  display: flex; align-items: center; justify-content: center;
+  border-right: 4px solid var(--black);
+}
+.team-badge__icon svg { width: 40px; transform: skewX(10deg); }
+.team-badge__text { padding: 8px 14px 10px; color: #fff; transform: skewX(10deg); }
+.team-badge__en { font-family: var(--pixel); font-size: 11px; color: var(--team); letter-spacing: 1px; }
+.team-badge__zh { font-size: 30px; font-weight: 900; line-height: 1.15; font-style: italic; }
+.green-line { height: 6px; margin: 10px 30px 0 40px; background: var(--green); transform: skewX(-40deg); }
+
+.mission-card {
+  margin-top: 22px; position: relative;
+  border: 4px solid var(--black); background: #fff;
+  box-shadow: 6px 6px 0 var(--champ);
+  padding: 0 18px 18px;
+}
+.ribbon {
+  display: inline-block; position: relative; top: -16px;
+  background: var(--red); color: #fff;
+  padding: 4px 18px; margin-left: -6px;
+  font-weight: 900; font-size: 17px; font-style: italic; letter-spacing: 1px;
+  transform: skewX(-14deg);
+  border: 3px solid var(--black);
+}
+.ribbon small { font-family: var(--pixel); font-size: 10px; font-style: normal; margin-right: 8px; }
+.mission-text { margin: -6px 0 0; font-size: 21px; font-weight: 900; line-height: 1.55; }
+.hl {
+  display: inline-block; padding: 0 8px; margin: 0 2px;
+  background: var(--team); color: var(--team-text);
+  border: 3px solid var(--black); transform: skewX(-8deg);
+}
+.mission-tip { margin: 10px 0 0; font-size: 15px; color: #555; }
+
+/* 電量條（DOM） */
+.battery-box { margin-top: 18px; display: flex; align-items: center; gap: 14px; }
+.battery { display: flex; align-items: center; flex: 1; }
+.battery__body {
+  flex: 1; display: flex; gap: 6px; padding: 6px;
+  border: 5px solid var(--black); background: #fff; height: 64px;
+}
+.battery__cap { width: 10px; height: 26px; background: var(--black); }
+.cell {
+  flex: 1; background: var(--gray);
+  background-image: repeating-linear-gradient(90deg, transparent 0 10px, rgba(0,0,0,.04) 10px 12px);
+}
+.cell.on {
+  background: var(--team);
+  box-shadow: inset 0 6px 0 rgba(255,255,255,.35), inset 0 -6px 0 rgba(0,0,0,.18);
+}
+.cell.pop { animation: cellpop .7s steps(4) 1; }
+@keyframes cellpop { 0%,50% { opacity: .2; } 25%,75%,100% { opacity: 1; } }
+.battery-label { font-family: var(--pixel); font-size: 16px; text-align: right; min-width: 64px; line-height: 1.6; }
+.battery-label small { display: block; font-size: 9px; color: #777; }
+
+.home-cta { margin-top: 26px; }
+.upload-chip {
+  margin: 18px auto 0; display: table;
+  font-size: 13px; color: #555; background: var(--gray);
+  padding: 4px 12px; border: 2px solid var(--black);
+}
+.upload-chip:empty { display: none; }
+
+.footer { margin-top: 26px; position: relative; }
+.footer__logo { width: 64px; margin: 0 auto 6px; touch-action: none; -webkit-touch-callout: none; }
+.footer__logo img { width: 100%; pointer-events: none; }
+.footer__hint { text-align: center; font-size: 11px; color: #999; margin-bottom: 8px; }
+.footer__wave { position: relative; }
+.footer__wave > svg { width: 100%; height: auto; }
+.footer__litter { position: absolute; right: 14px; bottom: 6px; display: flex; align-items: flex-end; gap: 8px; }
+.footer__litter svg:nth-child(1) { width: 24px; }
+.footer__litter svg:nth-child(2) { width: 20px; }
+.footer__litter svg:nth-child(3) { width: 46px; }
+.footer__safe { height: var(--safe-b); background: var(--champ); }
+
+/* ---------- 相機畫面（任務／濾鏡共用） ---------- */
+.cam { position: fixed; inset: 0; background: #000; overflow: hidden; color: #fff; }
+.cam video, .cam .freeze {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+}
+.cam .freeze { display: none; }
+.cam.is-frozen .freeze { display: block; }
+.cam__top {
+  position: absolute; left: 0; right: 0; top: 0;
+  padding: calc(var(--safe-t) + 12px) 14px 0;
+  display: flex; align-items: center; gap: 10px; z-index: 5;
+}
+.icon-btn {
+  width: 52px; height: 52px; flex: 0 0 52px;
+  background: #fff; color: var(--black);
+  border: 4px solid var(--black); box-shadow: 4px 4px 0 rgba(0,0,0,.5);
+  font-size: 22px; font-weight: 900; display: flex; align-items: center; justify-content: center;
+}
+.icon-btn:active { transform: translate(4px,4px); box-shadow: none; }
+.chip {
+  background: #fff; color: var(--black); border: 3px solid var(--black);
+  padding: 4px 12px; font-weight: 900; font-size: 16px;
+}
+.spacer { flex: 1; }
+
+/* 對準框 */
+.aim {
+  position: absolute; left: 50%; top: 46%;
+  width: min(74vw, 50vh, 400px); aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  z-index: 3; pointer-events: none;
+}
+.aim i { position: absolute; width: 22%; height: 22%; }
+.aim i::before, .aim i::after { content: ''; position: absolute; background: var(--team); outline: 3px solid var(--black); }
+.aim i::before { left: 0; top: 0; width: 100%; height: 14px; }
+.aim i::after { left: 0; top: 0; width: 14px; height: 100%; }
+.aim i:nth-child(1) { left: 0; top: 0; }
+.aim i:nth-child(2) { right: 0; top: 0; transform: scaleX(-1); }
+.aim i:nth-child(3) { left: 0; bottom: 0; transform: scaleY(-1); }
+.aim i:nth-child(4) { right: 0; bottom: 0; transform: scale(-1,-1); }
+.aim__px { position: absolute; width: 10px; height: 10px; background: var(--team); outline: 2px solid var(--black); }
+.aim__label {
+  position: absolute; left: 50%; top: -58px; transform: translateX(-50%);
+  white-space: nowrap; background: #fff; color: var(--black);
+  border: 3px solid var(--black); padding: 4px 12px; font-weight: 900; font-size: 17px;
+}
+.aim__label b { color: var(--team-text); background: var(--team); padding: 0 6px; }
+.cam.is-frozen .aim { opacity: .35; }
+
+.cam__bottom {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 5;
+  padding: 16px 20px calc(var(--safe-b) + 22px);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  background: linear-gradient(to top, rgba(0,0,0,.55), transparent);
+}
+.shutter {
+  width: 92px; height: 92px; border: 6px solid #fff; background: var(--team);
+  box-shadow: 0 0 0 5px var(--black), 6px 6px 0 5px rgba(0,0,0,.5);
+  position: relative;
+}
+.shutter::after { content: ''; position: absolute; inset: 14px; border: 4px solid rgba(0,0,0,.35); }
+.shutter:active { transform: translate(4px, 4px); }
+.shutter[disabled] { opacity: .5; }
+.test-link { color: #fff; font-size: 14px; text-decoration: underline; background: none; border: 0; padding: 6px; }
+
+.analyzing {
+  position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
+  z-index: 6; background: #fff; color: var(--black); border: 4px solid var(--black);
+  padding: 14px 22px; font-weight: 900; font-size: 18px; display: none; text-align: center;
+}
+.cam.is-analyzing .analyzing { display: block; }
+.dots { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+.dots span { width: 12px; height: 12px; background: var(--team); outline: 2px solid var(--black); animation: blink .9s steps(1) infinite; }
+.dots span:nth-child(2) { animation-delay: .3s; }
+.dots span:nth-child(3) { animation-delay: .6s; }
+@keyframes blink { 0% { opacity: 1; } 50% { opacity: .15; } }
+
+.cam-error {
+  position: absolute; inset: 0; z-index: 8; background: #fff; color: var(--black);
+  padding: calc(var(--safe-t) + 80px) 24px 24px; display: none; overflow-y: auto;
+}
+.cam-error.show { display: block; }
+.cam-error h3 { font-size: 22px; margin: 0 0 12px; }
+.cam-error p { margin: 0 0 18px; white-space: pre-line; }
+
+/* ---------- 底部結果面板 ---------- */
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  background: #fff; color: var(--black);
+  border-top: 5px solid var(--black);
+  padding: 22px 20px calc(var(--safe-b) + 24px);
+  transform: translateY(105%); transition: transform .25s steps(5), visibility 0s .25s;
+  visibility: hidden;
+  max-width: 520px; margin: 0 auto;
+}
+.sheet.show { transform: none; visibility: visible; transition: transform .25s steps(5); }
+.sheet__title { font-size: 28px; font-weight: 900; font-style: italic; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
+.sheet__title svg { width: 30px; }
+.sheet__msg { margin: 0 0 18px; font-size: 17px; }
+.sheet__debug { font-family: monospace; font-size: 12px; color: #888; margin: -10px 0 14px; }
+.sheet .battery__body { height: 46px; }
+.sheet .battery-box { margin: 0 0 20px; }
+.sheet .stack > * + * { margin-top: 14px; }
+
+/* ---------- 對話框 ---------- */
+.modal-bg {
+  position: fixed; inset: 0; z-index: 40; background: rgba(28,28,28,.6);
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-bg.show { display: flex; }
+.modal {
+  width: 100%; max-width: 400px; background: #fff; color: var(--black);
+  border: 5px solid var(--black); box-shadow: 8px 8px 0 var(--red);
+  padding: 20px;
+}
+.modal h3 { margin: 0 0 6px; font-size: 22px; font-weight: 900; }
+.modal p { margin: 0 0 16px; }
+.code-input {
+  width: 100%; font-size: 34px; text-align: center; letter-spacing: 10px;
+  font-family: var(--pixel); padding: 12px 6px;
+  border: 4px solid var(--black); border-radius: 0; margin-bottom: 18px; outline: none;
+  -webkit-user-select: text; user-select: text;
+}
+.code-input:focus { border-color: var(--red); }
+.shake { animation: shake .4s steps(4); }
+@keyframes shake { 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-6px); } }
+
+/* ---------- 解鎖動畫 ---------- */
+.unlock, .done { min-height: 100vh; min-height: 100dvh; }
+.unlock { position: relative; overflow: hidden; text-align: center; padding: calc(var(--safe-t) + 40px) 24px 40px; }
+.unlock__bolt { width: 80px; margin: 0 auto 10px; }
+.unlock__bolt.bounce { animation: bounce .6s steps(3) infinite alternate; }
+@keyframes bounce { to { transform: translateY(-14px); } }
+.unlock__battery { display: flex; align-items: center; justify-content: center; margin: 10px auto 0; max-width: 360px; }
+.unlock__battery .battery__body { height: 92px; gap: 5px; }
+.unlock__battery .cell.on { background: var(--green); }
+.unlock__pct { font-family: var(--pixel); font-size: 38px; margin: 26px 0 6px; }
+.unlock__title {
+  font-size: 34px; font-weight: 900; font-style: italic; margin: 6px 0 0;
+  opacity: 0; transform: scale(.6);
+}
+.unlock.done .unlock__title { opacity: 1; transform: none; transition: all .3s steps(3); }
+.unlock__sub {
+  display: inline-block; margin-top: 18px; background: var(--red); color: #fff;
+  border: 3px solid var(--black); padding: 6px 22px; font-size: 22px; font-weight: 900;
+  transform: skewX(-12deg); opacity: 0;
+}
+.unlock.done .unlock__sub { opacity: 1; transition: opacity .3s steps(3) .3s; }
+.unlock__cta { margin-top: 34px; opacity: 0; pointer-events: none; }
+.unlock.done .unlock__cta { opacity: 1; pointer-events: auto; transition: opacity .3s .6s; }
+.burst { position: absolute; left: 50%; top: 40%; width: 0; height: 0; pointer-events: none; }
+.burst i {
+  position: absolute; width: 14px; height: 14px;
+  animation: fly 1.1s steps(8) forwards;
+}
+@keyframes fly {
+  from { transform: translate(0,0); opacity: 1; }
+  to { transform: translate(var(--dx), var(--dy)); opacity: 0; }
+}
+
+/* ---------- 濾鏡相機 ---------- */
+.fcam { display: flex; align-items: center; justify-content: center; }
+.fcam canvas.live {
+  position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+  width: 100%; height: auto; aspect-ratio: 9 / 16;
+}
+@media (min-aspect-ratio: 9/16) { .fcam canvas.live { width: auto; height: 100%; } }
+.cam__bottom.frow {
+  flex-direction: row; justify-content: space-between; align-items: center;
+  padding-top: 14px; background: linear-gradient(to top, rgba(28,28,28,.9) 60%, rgba(28,28,28,0));
+}
+.frow > * { flex: 0 0 auto; }
+.frow .mode-toggle, .frow .flip { width: 96px; }
+.flip { flex-direction: column; height: 64px; font-size: 22px; line-height: 1; }
+.flip small { font-size: 12px; margin-top: 3px; }
+.fcam .src-video { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; }
+.mode-toggle { display: flex; flex-direction: column; border: 4px solid var(--black); background: #fff; }
+.mode-toggle button {
+  border: 0; background: #fff; color: var(--black); font-weight: 900; font-size: 16px;
+  padding: 6px 4px;
+}
+.mode-toggle button.on { background: var(--red); color: #fff; }
+.fshutter { background: #fff; }
+.fshutter.video { background: var(--red); }
+.fshutter.rec::after { inset: 24px; background: #fff; border: 0; }
+.rec-bar {
+  position: absolute; left: 14px; right: 14px; top: calc(var(--safe-t) + 76px); z-index: 6;
+  height: 18px; border: 3px solid var(--black); background: #fff; display: none;
+}
+.rec-bar.show { display: block; }
+.rec-bar span { display: block; height: 100%; width: 0; background: var(--red); }
+.rec-time {
+  font-family: var(--pixel); font-size: 14px; background: var(--red); color: #fff;
+  padding: 8px 10px; border: 3px solid var(--black); display: none;
+}
+.rec-time.show { display: block; }
+.fcam .shutter { width: 84px; height: 84px; }
+
+/* ---------- 預覽 ---------- */
+.preview { position: fixed; inset: 0; background: var(--black); display: flex; flex-direction: column; }
+.preview__media { flex: 1; position: relative; min-height: 0; }
+.preview__media img, .preview__media video {
+  position: absolute; inset: 12px; width: calc(100% - 24px); height: calc(100% - 24px); object-fit: contain;
+}
+.preview__bar { padding: 14px 20px calc(var(--safe-b) + 20px); background: #fff; border-top: 5px solid var(--black); }
+.preview__tip { font-size: 14px; color: #555; margin: 0 0 12px; text-align: center; }
+
+/* ---------- 完成頁 ---------- */
+.done { position: relative; overflow: hidden; padding: calc(var(--safe-t) + 50px) 22px 0; text-align: center; }
+.done__e { width: 120px; margin: 0 auto; }
+.done__title { font-size: 40px; font-weight: 900; font-style: italic; margin: 18px 0 0; position: relative; display: inline-block; }
+.done__title::after { content: ''; position: absolute; right: -18px; top: 10px; width: 12px; height: 46px; background: var(--red); transform: skewX(-30deg); }
+.done__card {
+  margin: 26px 0 0; border: 4px solid var(--black); box-shadow: 6px 6px 0 var(--champ);
+  padding: 22px 18px; font-size: 22px; font-weight: 900; line-height: 1.6; text-align: left;
+}
+.done__card .ribbon { top: -38px; margin-bottom: -26px; }
+.done .stack { margin-top: 30px; }
+
+/* ---------- 提示 ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: calc(var(--safe-b) + 150px); z-index: 60;
+  transform: translateX(-50%); background: var(--black); color: #fff;
+  padding: 10px 16px; font-weight: 700; font-size: 15px; border: 3px solid #fff;
+  max-width: 88vw; text-align: center; display: none;
+}
+.toast.show { display: block; }
+
+.inapp {
+  position: fixed; inset: 0; z-index: 80; background: #fff; padding: 50px 24px 24px; display: none; overflow-y: auto;
+}
+.inapp.show { display: block; }
+.inapp h2 { font-size: 24px; margin: 0 0 12px; }
+.inapp ol { padding-left: 22px; font-size: 18px; }
+.test-banner {
+  position: fixed; left: 0; bottom: 0; z-index: 90; background: var(--black); color: var(--green);
+  font-family: var(--pixel); font-size: 9px; padding: 3px 8px; pointer-events: none;
+}
+
+/* 微調 */
+.ftop { justify-content: center; }
+.frow { gap: 10px; }
+.frow .fclose { width: 46px; height: 46px; flex: 0 0 46px; font-size: 18px; border-width: 3px; }
+.frow .mode-toggle, .frow .flip { width: 88px; }
+.done .footer { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; }
+.done { padding-bottom: 120px; }
+/* 錄影進度放在下方，不擋濾鏡標題 */
+.fcam .rec-bar { top: auto; bottom: calc(var(--safe-b) + 136px); }
+.fcam .ftop { top: auto; bottom: calc(var(--safe-b) + 160px); padding: 0; }
+
+/* 工作人員重設：logo 熱區與按住時的進度提示 */
+.kv-wrap { position: relative; }
+.kv-wrap .kv { -webkit-touch-callout: none; pointer-events: none; }
+.kv-logo { position: absolute; right: 2%; top: 2%; width: 18%; height: 24%; touch-action: none; -webkit-touch-callout: none; }
+.staff-hot { -webkit-user-select: none; user-select: none; }
+.footer__logo.staff-hot { position: relative; }
+.staff-hot::after {
+  content: ''; position: absolute; left: 0; bottom: -8px; height: 5px; width: 0;
+  background: var(--red); pointer-events: none;
+}
+.staff-hot.holding::after { width: 100%; transition: width 2s linear; }
+.footer__logo { padding: 6px 0; }
