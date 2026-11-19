@@ -5,6 +5,7 @@
 (function () {
   'use strict';
 
+  var APP_VERSION = '2026.11.19-V2濾鏡';  // 程式版本（測試模式左下角會顯示）
   var CFG = window.EPLAYER_CONFIG;
   var TEAM_ID = window.EPLAYER_TEAM;
   var TEAM = CFG.TEAMS[TEAM_ID];
@@ -179,7 +180,7 @@
       '<p>你目前在 App 內建的瀏覽器裡，相機可能無法使用。</p>' +
       '<ol><li>點右上角「⋯」或分享按鈕</li><li>選「用瀏覽器開啟」／「在 Safari 開啟」／「在 Chrome 開啟」</li></ol>' +
       '<button class="pbtn pbtn--white" id="inapp-ok" style="margin-top:20px">我知道了，先繼續</button></div>' +
-    (TEST ? '<div class="test-banner">TEST MODE</div>' : '');
+    (TEST ? '<div class="test-banner">TEST MODE · ' + APP_VERSION + '</div>' : '');
 
   function batteryHTML(id) {
     return '<div class="battery"><div class="battery__body" id="' + id + '"></div><div class="battery__cap"></div></div>';
@@ -471,6 +472,16 @@
   /* ---------- 顏色辨識（HSV） ---------- */
   function analyzeColor(src, rect) {
     var rule = CFG.COLOR_RULES[TEAM_ID];
+    // 每一段色相可以有自己的門檻（沒寫就用整體的 sMin／vMin／vMax）
+    var ranges = rule.hue.map(function (h) {
+      var o = h[2] || {};
+      return {
+        lo: h[0], hi: h[1],
+        sMin: o.sMin !== undefined ? o.sMin : rule.sMin,
+        vMin: o.vMin !== undefined ? o.vMin : rule.vMin,
+        vMax: o.vMax !== undefined ? o.vMax : (rule.vMax !== undefined ? rule.vMax : 1)
+      };
+    });
     var S = 72;
     var t = document.createElement('canvas'); t.width = t.height = S;
     var x = t.getContext('2d', { willReadFrequently: true });
@@ -480,15 +491,16 @@
     for (var i = 0; i < d.length; i += 4) {
       var r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
       var max = Math.max(r, g, b), min = Math.min(r, g, b), c = max - min;
-      var v = max, s = max === 0 ? 0 : c / max;
-      if (v < rule.vMin || v > rule.vMax || s < rule.sMin || c === 0) continue;
+      if (c === 0) continue;
+      var v = max, s = c / max;
       var h;
       if (max === r) h = ((g - b) / c) % 6;
       else if (max === g) h = (b - r) / c + 2;
       else h = (r - g) / c + 4;
       h *= 60; if (h < 0) h += 360;
-      for (var k = 0; k < rule.hue.length; k++) {
-        if (h >= rule.hue[k][0] && h <= rule.hue[k][1]) { match++; break; }
+      for (var k = 0; k < ranges.length; k++) {
+        var q = ranges[k];
+        if (h >= q.lo && h <= q.hi && s >= q.sMin && v >= q.vMin && v <= q.vMax) { match++; break; }
       }
     }
     var ratio = match / (S * S);
@@ -747,76 +759,57 @@
     ctx.drawImage(img, x, y, w, h);
   }
 
-  /* 濾鏡版型（三隊共用）：以 1080×1920 為基準
-   * 上方：像素 E ＋「級玩家」整組斜放、微破框；右上去背 NISSAN logo
-   * 左右與下方：黑色細框、紅色細線、角落斜向色塊、螢光綠線 */
+  /* 濾鏡版型（三隊共用）：以 1080×1920 為基準｜V2 遊戲 HUD
+   * 上方：像素狀態列（閃電＋電量條＋訊號）、右上去背 NISSAN logo
+   * 四角：紅色像素觀景框；點綴：綠色閃光、左下小像素 E
+   * 底部：白底像素海浪＋沙灘＋海廢 */
+  function outlined(ctx, cells, x, y, s, pad) { // 白邊包住像素圖，深色照片上也看得到
+    ctx.fillStyle = '#fff';
+    cells.forEach(function (c) { ctx.fillRect(x + c.x * s - pad, y + c.y * s - pad, s + pad * 2, s + pad * 2); });
+    PX.draw(ctx, cells, x, y, s);
+  }
   function drawOverlay(ctx, W, H) {
+    var P = PX.PAL;
     ctx.save();
     ctx.scale(W / 1080, H / 1920);
-    var P = PX.PAL;
-    // ---------- 上方標題區（透明，直接疊在照片上） ----------
-    // 右上斜線
-    para(ctx, 850, 158, 230, 14, P.R);
-    para(ctx, 900, 182, 180, 6, P.C);
-    para(ctx, 960, 198, 120, 4, P.K);
-    // NISSAN logo（去背）
-    if (logoImg.complete && logoImg.naturalWidth) drawLogo(ctx, logoImg, 924, 30, 120, true);
 
-    // 標題組：像素 E ＋「級玩家」＋點綴，整組斜放、往上破框
-    var TILT = -0.09, GX = 24, GY = 58;
-    ctx.save();
-    ctx.translate(GX, GY); ctx.rotate(TILT);
-    var cell = 16, ew = 10 * cell, eh = 12 * cell;
-    PX.draw(ctx, PX.cells('E'), 0, 0, cell, { shadow: { dx: 0.5, dy: 0.5 } });
-    var title = CFG.FILTER_TITLE || '級玩家', tx = ew + 16, SK = 0.2;
-    var fs = 200; ctx.font = '900 ' + fs + 'px ' + FONT_ZH;
-    var m = ctx.measureText(title), gh = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
-    fs = fs * (eh * 0.98) / gh; ctx.font = '900 ' + fs + 'px ' + FONT_ZH; m = ctx.measureText(title);
-    var baseY = eh - m.actualBoundingBoxDescent, tw = m.width, ta = m.actualBoundingBoxAscent, tTop = baseY - ta;
-    ctx.save();
-    ctx.translate(tx, baseY); ctx.transform(1, 0, -SK, 1, 0, 0); ctx.lineJoin = 'round';
-    ctx.fillStyle = P.C; ctx.fillText(title, 8, 8);
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 20; ctx.strokeText(title, 0, 0); // 白邊
-    ctx.fillStyle = P.K; ctx.fillText(title, 0, 0);
-    ctx.restore();
-    // 紅色斜切
-    para(ctx, tx + 2, tTop - 26, 60, 14, P.R, 18);
-    para(ctx, tx + tw + SK * ta * 0.4 + 2, tTop + 16, 16, 76, P.R, 22);
-    // 下方：棋盤格、螢光綠斜線、閃電＋電量條＋訊號
-    PX.draw(ctx, PX.checker(8, 3, true), 0, eh + 16, 11);
-    para(ctx, tx + 16, eh + 18, 300, 11, P.G, 9);
-    var bx = tx + tw - 250, by = eh + 10;
-    PX.draw(ctx, PX.cells('BOLT'), bx, by, 5);
-    PX.drawBattery(ctx, bx + 52, by + 14, 116, 38, 5, 5, P.G);
-    PX.draw(ctx, PX.cells('SIGNAL'), bx + 188, by + 2, 4);
-    ctx.restore();
+    // 四角像素觀景框（黑外框＋紅色）
+    function bracket(x, y, sx, sy) {
+      var L = 150, T = 22;
+      ctx.save(); ctx.translate(x, y); ctx.scale(sx, sy);
+      ctx.fillStyle = P.K; ctx.fillRect(-6, -6, L + 12, T + 12); ctx.fillRect(-6, -6, T + 12, L + 12);
+      ctx.fillStyle = P.R; ctx.fillRect(0, 0, L, T); ctx.fillRect(0, 0, T, L);
+      ctx.fillStyle = '#fff'; ctx.fillRect(T + 8, T + 8, 14, 14);
+      ctx.restore();
+    }
+    bracket(46, 186, 1, 1); bracket(1034, 186, -1, 1); bracket(46, 1740, 1, -1); bracket(1034, 1740, -1, -1);
 
-    // ---------- 左右與下方：線條 ----------
-    var inset = 30, lw = 6, topL = 380, topR = 290;
-    // 左右直線（黑）＋內側細紅線
-    ctx.fillStyle = P.K;
-    ctx.fillRect(inset, topL, lw, 1920 - inset - topL);
-    ctx.fillRect(1080 - inset - lw, topR, lw, 1920 - inset - topR);
-    ctx.fillRect(inset, 1920 - inset - lw, 1080 - inset * 2, lw);
-    ctx.fillStyle = P.R;
-    ctx.fillRect(inset + 14, topL + 60, 4, 1920 - inset - topL - 160);
-    ctx.fillRect(1080 - inset - 18, topR + 60, 4, 1920 - inset - topR - 160);
-    // 線段起點的像素方塊
-    [[inset - 4, topL - 14], [1080 - inset - lw - 4, topR - 14]].forEach(function (p) {
-      ctx.fillStyle = P.R; ctx.fillRect(p[0], p[1], 14, 14);
-    });
-    // 左下角斜向色塊
-    para(ctx, 0, 1790, 230, 22, P.R, 22);
-    para(ctx, 20, 1824, 150, 9, P.C, 9);
-    para(ctx, 0, 1846, 110, 5, P.K, 5);
-    // 右下角斜向色塊＋螢光綠
-    para(ctx, 830, 1790, 250, 22, P.R, 22);
-    para(ctx, 900, 1824, 180, 9, P.C, 9);
-    para(ctx, 960, 1846, 120, 5, P.K, 5);
-    para(ctx, 380, 1868, 320, 10, P.G, 10);
-    // 右側棋盤格點綴
-    PX.draw(ctx, PX.checker(5, 4, true), 990, 1150, 12);
-    PX.draw(ctx, PX.cells('SPARK'), 60, 1180, 7);
+    // 上方狀態列：閃電＋電量條（充滿）＋訊號
+    ctx.fillStyle = 'rgba(255,255,255,0.88)'; ctx.fillRect(40, 44, 470, 104);
+    ctx.strokeStyle = P.K; ctx.lineWidth = 6; ctx.strokeRect(40, 44, 470, 104);
+    PX.draw(ctx, PX.cells('BOLT'), 66, 54, 7);
+    PX.drawBattery(ctx, 140, 66, 220, 60, 5, 5, P.G);
+    PX.draw(ctx, PX.cells('SIGNAL'), 400, 60, 7);
+    PX.draw(ctx, PX.checker(6, 3, false), 540, 70, 12);
+
+    // 右上 NISSAN logo（去背＋白色外框）
+    if (logoImg.complete && logoImg.naturalWidth) drawLogo(ctx, logoImg, 916, 34, 124, true);
+
+    // 綠色閃光＋左下小像素 E
+    outlined(ctx, PX.cells('SPARK'), 980, 420, 8, 3);
+    outlined(ctx, PX.cells('SPARK'), 70, 1300, 7, 3);
+    outlined(ctx, PX.cells('SPARK'), 940, 1450, 5, 3);
+    PX.draw(ctx, PX.cells('E'), 110, 1590, 8, { shadow: { dx: 0.6, dy: 0.6 } });
+
+    // 底部：白底像素海浪＋沙灘＋海廢
+    var wave = PX.waveBand(90, 3), wy = 1920 - wave.h * 12;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, wy + 12, 1080, wave.h * 12);
+    for (var i = 0; i < 90; i++) if (i % 3 !== 1) ctx.fillRect(i * 12, wy, 12, 12);
+    PX.draw(ctx, wave.cells, 0, wy, 12);
+    PX.draw(ctx, PX.cells('BOTTLE'), 830, 1838, 6.5);
+    PX.draw(ctx, PX.cells('CAP'), 882, 1886, 5.5);
+    PX.draw(ctx, PX.cells('BAG'), 934, 1836, 7);
+
     ctx.restore();
   }
 
@@ -854,7 +847,7 @@
   function openFilter() {
     show('filter');
     $('#f-error').classList.remove('show');
-    fontsReady.then(startFilterCam);
+    startFilterCam();
     loop();
   }
   function startFilterCam() {
