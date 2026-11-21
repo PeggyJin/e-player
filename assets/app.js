@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '2026.11.21-尋寶任務';  // 程式版本（測試模式左下角會顯示）
+  var APP_VERSION = '2026.11.21-再玩一次';  // 程式版本（測試模式左下角會顯示）
   var CFG = window.EPLAYER_CONFIG;
   var ORDER = CFG.MISSION_ORDER;   // 依序要找的顏色，例如 ['red','yellow','green']
   var COLORS = CFG.COLORS;
@@ -32,7 +32,7 @@
    * ========================================================= */
   var STORE_KEY = 'eplayer_v2_main';
   function freshState() {
-    var s = { slots: [], fails: [], unlocked: false, uploaded: 0 };
+    var s = { slots: [], fails: [], unlocked: false, uploaded: 0, round: 1 };
     for (var i = 0; i < N; i++) { s.slots.push(null); s.fails.push(0); }
     return s;
   }
@@ -81,8 +81,7 @@
   app.innerHTML =
     /* ---------- 首頁 ---------- */
     '<section id="s-home" class="screen"><div class="wrap">' +
-      '<div class="kv-wrap"><img class="kv" src="assets/kv.webp" alt="NISSAN E級玩家｜' + CFG.EVENT_SLOGAN + '">' +
-        '<div class="kv-logo" id="kv-logo" aria-hidden="true"></div></div>' +
+      '<div class="kv-wrap"><img class="kv" src="assets/kv.webp" alt="NISSAN E級玩家｜' + CFG.EVENT_SLOGAN + '"></div>' +
       '<div class="home-body">' +
         '<div class="team-badge"><div class="team-badge__icon">' + badgeIcon + '</div>' +
           '<div class="team-badge__text"><div class="team-badge__en">MISSION · ' + N + ' COLORS</div>' +
@@ -95,7 +94,8 @@
             '<div class="battery-label" id="home-count"></div></div>' +
           '<p class="mission-tip" id="home-tip"></p>' +
         '</div>' +
-        '<div class="home-cta"><button class="pbtn" id="btn-start"></button></div>' +
+        '<div class="home-cta stack"><button class="pbtn" id="btn-start"></button>' +
+          '<button class="pbtn pbtn--white" id="btn-second" hidden></button></div>' +
         '<div class="upload-chip" id="upload-chip"></div>' +
       '</div>' +
       '<div class="footer">' +
@@ -146,15 +146,19 @@
     /* ---------- 濾鏡相機 ---------- */
     '<section id="s-filter" class="screen"><div class="cam fcam" id="fcam">' +
       '<video class="src-video" id="fvideo" playsinline muted autoplay></video>' +
-      '<canvas class="live" id="fcanvas" width="720" height="1280"></canvas>' +
-      '<div class="cam__top ftop"><span class="rec-time" id="rec-time"></span></div>' +
-      '<div class="rec-bar" id="rec-bar"><span></span></div>' +
-      '<button class="slogan-btn" id="f-slogan">💬 換標語 <small id="f-slogan-n"></small></button>' +
-      '<div class="cam__bottom frow">' +
-        '<button class="icon-btn fclose" id="f-close" aria-label="返回">✕</button>' +
-        '<div class="mode-toggle" id="f-mode"><button data-mode="photo" class="on">拍照</button><button data-mode="video">錄影</button></div>' +
-        '<button class="shutter fshutter" id="f-shutter" aria-label="拍攝"></button>' +
-        '<button class="icon-btn flip" id="f-flip" aria-label="切換鏡頭"><span>⟲</span><small>翻轉</small></button>' +
+      // 濾鏡畫面只佔控制列以上的空間，按鈕不會擋到標語
+      '<div class="fstage" id="fstage"><canvas class="live" id="fcanvas" width="720" height="1280"></canvas></div>' +
+      '<div class="fbar" id="fbar">' +
+        '<div class="fbar__top">' +
+          '<button class="slogan-btn" id="f-slogan">💬 換標語 <small id="f-slogan-n"></small></button>' +
+          '<div class="rec-bar" id="rec-bar"><span></span></div><span class="rec-time" id="rec-time"></span>' +
+        '</div>' +
+        '<div class="fbar__row">' +
+          '<button class="icon-btn fclose" id="f-close" aria-label="返回">✕</button>' +
+          '<div class="mode-toggle" id="f-mode"><button data-mode="photo" class="on">拍照</button><button data-mode="video">錄影</button></div>' +
+          '<button class="shutter fshutter" id="f-shutter" aria-label="拍攝"></button>' +
+          '<button class="icon-btn flip" id="f-flip" aria-label="切換鏡頭"><span>⟲</span><small>翻轉</small></button>' +
+        '</div>' +
       '</div>' +
       '<div class="cam-error" id="f-error"><h3>相機打不開</h3><p id="f-error-msg"></p>' +
         '<div class="stack"><button class="pbtn" id="f-retry">再試一次</button>' +
@@ -229,71 +233,45 @@
     setTarget(currentSlot());
     fillCells($('#home-cells'), N, n, -1, true);
     $('#home-count').innerHTML = n + '/' + N + '<small>' + Math.round(n / N * 100) + '%</small>';
-    var btn = $('#btn-start');
-    if (state.unlocked) {
+    var btn = $('#btn-start'), btn2 = $('#btn-second');
+    btn2.hidden = true;
+    if (n >= N && state.unlocked) {
+      // 三關都完成：進濾鏡，或選擇再玩一次
       $('#home-ribbon').innerHTML = '<small>CLEAR</small>任務完成';
       $('#home-tip').textContent = CFG.TEXT.doneMessage;
       btn.textContent = '📸 進入濾鏡相機';
+      btn2.textContent = '🔄 再玩一次'; btn2.hidden = false; btn2.dataset.act = 'replay';
     } else if (n >= N) {
       $('#home-tip').textContent = '電量已充滿！';
       btn.textContent = '⚡ 解鎖濾鏡';
     } else {
+      // 任務進行中（再玩一次時，已解鎖的濾鏡仍可隨時使用）
+      $('#home-ribbon').innerHTML = '<small>MISSION</small>' + (state.round > 1 ? '任務・第 ' + state.round + ' 輪' : '任務');
       var cid = slotColorId(currentSlot());
       $('#home-tip').innerHTML = '<b>第 ' + (n + 1) + ' 關：找 ' + hl(cid) + ' 海廢</b><br>' + COLORS[cid].hint +
         '<br>小提示：把海廢放在框的中央、拿近一點，避開逆光。';
       btn.textContent = n === 0 ? '開始任務 📷' : '繼續任務 📷';
+      if (state.unlocked) { btn2.textContent = '📸 濾鏡相機'; btn2.hidden = false; btn2.dataset.act = 'filter'; }
     }
     updateChip();
   }
 
   $('#btn-start').addEventListener('click', function () {
     unlockAudio();
-    if (state.unlocked) openFilter();
-    else if (doneCount() >= N) openUnlock();
+    if (doneCount() >= N) { if (state.unlocked) openFilter(); else openUnlock(); }
     else openMission();
   });
-
-  /* 工作人員重設進度：長按 NISSAN logo 2 秒，或 3 秒內連點 5 下
-   * 首頁最下方的 logo、主視覺右上角的 logo 都可以 */
-  (function () {
-    var timer = null, taps = [], busy = false;
-    function fire() { if (busy) return; busy = true; clear(); openReset(); setTimeout(function () { busy = false; }, 800); }
-    function clear() {
-      clearTimeout(timer);
-      document.querySelectorAll('.staff-hot').forEach(function (el) { el.classList.remove('holding'); });
-    }
-    function bind(el) {
-      el.classList.add('staff-hot');
-      function start(e) {
-        if (e.cancelable) e.preventDefault();
-        el.classList.add('holding');
-        timer = setTimeout(fire, 2000);
-        var now = Date.now();
-        taps = taps.filter(function (t) { return now - t < 3000; }); taps.push(now);
-        if (taps.length >= 5) { taps = []; fire(); }
-      }
-      el.addEventListener('touchstart', start, { passive: false });
-      el.addEventListener('mousedown', start);
-      ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(function (ev) { el.addEventListener(ev, clear); });
-      el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-    }
-    bind($('#logo'));
-    bind($('#kv-logo'));
-  })();
-
-  function openReset() {
-    if (navigator.vibrate) navigator.vibrate(60);
-    codeModal('工作人員：重設進度', '輸入通關碼後，會清除這支手機的任務進度。').then(function (ok) {
-      if (!ok) return;
-      confirmModal('確定要重設嗎？', '任務格數、失敗次數、濾鏡解鎖都會歸零（已上傳的照片不受影響）。', '確定重設', '取消')
-        .then(function (yes) {
-          if (!yes) return;
-          var uploaded = state.uploaded;
-          state = freshState(); state.uploaded = uploaded; saveState();
-          renderHome(); toast('已重設進度');
-        });
-    });
-  }
+  $('#btn-second').addEventListener('click', function () {
+    unlockAudio();
+    if (this.dataset.act === 'filter') return openFilter();
+    confirmModal('再玩一次？', '會從第 1 關「' + slotColor(0).name + '」重新開始尋寶，濾鏡相機一樣可以使用。', '再玩一次', '取消')
+      .then(function (yes) {
+        if (!yes) return;
+        var keep = { unlocked: state.unlocked, uploaded: state.uploaded, round: (state.round || 1) + 1 };
+        state = freshState(); state.unlocked = keep.unlocked; state.uploaded = keep.uploaded; state.round = keep.round;
+        saveState(); renderHome(); window.scrollTo(0, 0); toast('第 ' + state.round + ' 輪開始！先找' + slotColor(0).name + '海廢');
+      });
+  });
 
   /* =========================================================
    *  對話框（通關碼／確認）
@@ -929,8 +907,22 @@
   var rafId = null, recorder = null, recChunks = [], recTimer = null, recStart = 0;
   var result = null; // { blob, type, kind }
 
+  // 依螢幕大小，把 9:16 的濾鏡畫面縮放到控制列上方的空間
+  function layoutFilter() {
+    var bar = $('#fbar'), st = $('#fstage');
+    if (!bar || !st) return;
+    st.style.bottom = bar.offsetHeight + 'px';
+    var W = st.clientWidth, H = st.clientHeight;
+    if (!W || !H) return;
+    var w = Math.min(W, H * 9 / 16), h = w * 16 / 9;
+    fcanvas.style.width = Math.floor(w) + 'px';
+    fcanvas.style.height = Math.floor(h) + 'px';
+  }
+  window.addEventListener('resize', function () { if (current === 'filter') layoutFilter(); });
+  window.addEventListener('orientationchange', function () { setTimeout(function () { if (current === 'filter') layoutFilter(); }, 300); });
   function openFilter() {
     show('filter');
+    layoutFilter();
     $('#f-error').classList.remove('show');
     startFilterCam();
     loop();
