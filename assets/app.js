@@ -1,15 +1,17 @@
 /* =========================================================
- *  NISSAN E級玩家｜共用主程式（三隊共用）
- *  流程：首頁 → 任務相機 → 判定 → 充電完成動畫 → 濾鏡相機 → 預覽 → 完成頁
+ *  NISSAN E級玩家｜主程式（單一入口）
+ *  流程：首頁 → 任務相機（依序找紅→黃→綠）→ 判定 → 充電完成動畫 → 濾鏡相機 → 預覽
  * ========================================================= */
 (function () {
   'use strict';
 
-  var APP_VERSION = '2026.11.19-V2濾鏡';  // 程式版本（測試模式左下角會顯示）
+  var APP_VERSION = '2026.11.21-尋寶任務';  // 程式版本（測試模式左下角會顯示）
   var CFG = window.EPLAYER_CONFIG;
-  var TEAM_ID = window.EPLAYER_TEAM;
-  var TEAM = CFG.TEAMS[TEAM_ID];
-  var N = CFG.MISSION_COUNT;
+  var ORDER = CFG.MISSION_ORDER;   // 依序要找的顏色，例如 ['red','yellow','green']
+  var COLORS = CFG.COLORS;
+  var N = ORDER.length;
+  function slotColorId(i) { return ORDER[Math.max(0, Math.min(N - 1, i))]; }
+  function slotColor(i) { return COLORS[slotColorId(i)]; }
   var QS = new URLSearchParams(location.search);
   var TEST = QS.get('test') === '1';
   var UA = navigator.userAgent;
@@ -28,7 +30,7 @@
   /* =========================================================
    *  進度（存在手機本機）
    * ========================================================= */
-  var STORE_KEY = 'eplayer_v1_' + TEAM_ID;
+  var STORE_KEY = 'eplayer_v2_main';
   function freshState() {
     var s = { slots: [], fails: [], unlocked: false, uploaded: 0 };
     for (var i = 0; i < N; i++) { s.slots.push(null); s.fails.push(0); }
@@ -61,11 +63,16 @@
    *  畫面
    * ========================================================= */
   var root = document.documentElement.style;
-  root.setProperty('--team', TEAM.color);
-  root.setProperty('--team-text', TEAM.textOnColor);
-
-  var hlColor = '<span class="hl">' + TEAM.colorName + '</span>';
-  var missionLine = CFG.TEXT.missionLine.replace('{n}', N).replace('{color}', hlColor);
+  // 按鈕、對準框等跟著「目前要找的顏色」變色
+  function setTarget(i) {
+    var c = slotColor(i < 0 ? N - 1 : i);
+    root.setProperty('--team', c.color);
+    root.setProperty('--team-text', c.textOnColor);
+  }
+  function hl(id) { var c = COLORS[id]; return '<span class="hl" style="background:' + c.color + ';color:' + c.textOnColor + '">' + c.name + '</span>'; }
+  var colorChain = ORDER.map(hl).join('<span class="arrow">→</span>');
+  var missionLine = CFG.TEXT.missionLine.replace('{colors}', colorChain);
+  var badgeIcon = '<div class="tri">' + ORDER.map(function (id) { return '<i style="background:' + COLORS[id].color + '"></i>'; }).join('') + '</div>';
   var waveSvg = PX.svg(PX.waveBand(60, 3).cells);
   var boltSvg = PX.svg(PX.cells('BOLT'));
   var eSvg = PX.svg(PX.cells('E'), { shadow: { dx: 0.7, dy: 0.7 } });
@@ -77,9 +84,9 @@
       '<div class="kv-wrap"><img class="kv" src="assets/kv.webp" alt="NISSAN E級玩家｜' + CFG.EVENT_SLOGAN + '">' +
         '<div class="kv-logo" id="kv-logo" aria-hidden="true"></div></div>' +
       '<div class="home-body">' +
-        '<div class="team-badge"><div class="team-badge__icon">' + PX.svg(PX.cells(TEAM.icon || 'BOLT', 0, 0, TEAM.textOnColor)) + '</div>' +
-          '<div class="team-badge__text"><div class="team-badge__en">TEAM ' + TEAM.en.toUpperCase() + '</div>' +
-          '<div class="team-badge__zh">' + TEAM.zh + '</div></div></div>' +
+        '<div class="team-badge"><div class="team-badge__icon">' + badgeIcon + '</div>' +
+          '<div class="team-badge__text"><div class="team-badge__en">MISSION · ' + N + ' COLORS</div>' +
+          '<div class="team-badge__zh">淨灘尋寶任務</div></div></div>' +
         '<div class="green-line"></div>' +
         '<div class="mission-card">' +
           '<div class="ribbon" id="home-ribbon"><small>MISSION</small>任務</div>' +
@@ -108,7 +115,7 @@
         '<span class="chip" id="m-slot"></span><span class="spacer"></span>' +
       '</div>' +
       '<div class="aim" id="aim"><i></i><i></i><i></i><i></i>' +
-        '<div class="aim__label">把 <b>' + TEAM.colorName + '</b> 海廢放進框裡</div></div>' +
+        '<div class="aim__label">把 <b id="aim-color"></b> 海廢放進框裡</div></div>' +
       '<div class="analyzing">分析顏色中<div class="dots"><span></span><span></span><span></span></div></div>' +
       '<div class="cam__bottom">' +
         '<button class="shutter" id="m-shutter" aria-label="拍照"></button>' +
@@ -142,6 +149,7 @@
       '<canvas class="live" id="fcanvas" width="720" height="1280"></canvas>' +
       '<div class="cam__top ftop"><span class="rec-time" id="rec-time"></span></div>' +
       '<div class="rec-bar" id="rec-bar"><span></span></div>' +
+      '<button class="slogan-btn" id="f-slogan">💬 換標語 <small id="f-slogan-n"></small></button>' +
       '<div class="cam__bottom frow">' +
         '<button class="icon-btn fclose" id="f-close" aria-label="返回">✕</button>' +
         '<div class="mode-toggle" id="f-mode"><button data-mode="photo" class="on">拍照</button><button data-mode="video">錄影</button></div>' +
@@ -185,9 +193,13 @@
   function batteryHTML(id) {
     return '<div class="battery"><div class="battery__body" id="' + id + '"></div><div class="battery__cap"></div></div>';
   }
-  function fillCells(el, total, on, popIndex) {
+  function fillCells(el, total, on, popIndex, perColor) {
     var h = '';
-    for (var i = 0; i < total; i++) h += '<div class="cell' + (i < on ? ' on' : '') + (i === popIndex ? ' pop' : '') + '"></div>';
+    for (var i = 0; i < total; i++) {
+      var st = (perColor && i < on) ? ' style="background:' + slotColor(i).color + '"' : '';
+      var lbl = perColor ? '<span>' + slotColor(i).name.charAt(0) + '</span>' : '';
+      h += '<div class="cell' + (i < on ? ' on' : '') + (i === popIndex ? ' pop' : '') + (perColor ? ' labeled' : '') + '"' + st + '>' + lbl + '</div>';
+    }
     el.innerHTML = h;
   }
 
@@ -214,7 +226,8 @@
    * ========================================================= */
   function renderHome() {
     var n = doneCount();
-    fillCells($('#home-cells'), N, n);
+    setTarget(currentSlot());
+    fillCells($('#home-cells'), N, n, -1, true);
     $('#home-count').innerHTML = n + '/' + N + '<small>' + Math.round(n / N * 100) + '%</small>';
     var btn = $('#btn-start');
     if (state.unlocked) {
@@ -225,7 +238,9 @@
       $('#home-tip').textContent = '電量已充滿！';
       btn.textContent = '⚡ 解鎖濾鏡';
     } else {
-      $('#home-tip').textContent = '小提示：把海廢放在框的中央、拿近一點，避開逆光。';
+      var cid = slotColorId(currentSlot());
+      $('#home-tip').innerHTML = '<b>第 ' + (n + 1) + ' 關：找 ' + hl(cid) + ' 海廢</b><br>' + COLORS[cid].hint +
+        '<br>小提示：把海廢放在框的中央、拿近一點，避開逆光。';
       btn.textContent = n === 0 ? '開始任務 📷' : '繼續任務 📷';
     }
     updateChip();
@@ -268,7 +283,7 @@
 
   function openReset() {
     if (navigator.vibrate) navigator.vibrate(60);
-    codeModal('工作人員：重設進度', '輸入通關碼後，會清除這支手機在「' + TEAM.zh + '」的任務進度。').then(function (ok) {
+    codeModal('工作人員：重設進度', '輸入通關碼後，會清除這支手機的任務進度。').then(function (ok) {
       if (!ok) return;
       confirmModal('確定要重設嗎？', '任務格數、失敗次數、濾鏡解鎖都會歸零（已上傳的照片不受影響）。', '確定重設', '取消')
         .then(function (yes) {
@@ -386,9 +401,15 @@
   var lastCapture = null; // 最近一次拍到的畫面（canvas）
   var mvideo = $('#mvideo'), mcam = $('#mcam');
 
+  function updateMissionLabel() {
+    var i = currentSlot(), c = slotColor(i);
+    setTarget(i);
+    $('#m-slot').innerHTML = '第 ' + (i + 1) + ' / ' + N + ' 關・' + c.name;
+    $('#aim-color').textContent = c.name;
+  }
   function openMission() {
     show('mission');
-    $('#m-slot').textContent = '第 ' + (currentSlot() + 1) + ' / ' + N + ' 個';
+    updateMissionLabel();
     mcam.classList.remove('is-frozen', 'is-analyzing');
     $('#m-error').classList.remove('show');
     mBusy = false;
@@ -471,7 +492,7 @@
 
   /* ---------- 顏色辨識（HSV） ---------- */
   function analyzeColor(src, rect) {
-    var rule = CFG.COLOR_RULES[TEAM_ID];
+    var rule = CFG.COLOR_RULES[slotColorId(currentSlot())];
     // 每一段色相可以有自己的門檻（沒寫就用整體的 sMin／vMin／vMax）
     var ranges = rule.hue.map(function (h) {
       var o = h[2] || {};
@@ -521,18 +542,20 @@
     state.slots[slot] = { ts: Date.now(), manual: !!manual };
     state.fails[slot] = 0;
     saveState();
-    enqueueUpload(lastCapture, slot + 1, manual);
+    enqueueUpload(lastCapture, slot + 1, manual, slotColorId(slot));
     sfx('success'); buzz([60, 40, 120]);
     var n = doneCount();
     var last = n >= N;
+    var doneName = slotColor(slot).name;
+    if (!last) setTarget(currentSlot()); // 按鈕換成下一關的顏色
     showSheet(
-      '<h3 class="sheet__title">' + boltSvg + (manual ? '工作人員已放行！' : '充電 +1！') + '</h3>' +
-      '<p class="sheet__msg">' + (last ? '3 個都找到了，電量充滿！' : '還差 ' + (N - n) + ' 個' + TEAM.colorName + '海廢，繼續加油！') + '</p>' +
+      '<h3 class="sheet__title">' + boltSvg + (manual ? '工作人員已放行！' : doneName + '過關！充電 +1') + '</h3>' +
+      '<p class="sheet__msg">' + (last ? '紅、黃、綠都找到了，電量充滿！' : '下一關：找 ' + hl(slotColorId(currentSlot())) + ' 海廢！') + '</p>' +
       debugLine(res) +
       '<div class="battery-box">' + batteryHTML('sheet-cells') + '<div class="battery-label">' + n + '/' + N + '</div></div>' +
-      '<button class="pbtn" id="sh-next">' + (last ? '⚡ 充電完成！' : '繼續找下一個 →') + '</button>'
+      '<button class="pbtn" id="sh-next">' + (last ? '⚡ 充電完成！' : '下一關 →') + '</button>'
     );
-    fillCells($('#sheet-cells'), N, n, n - 1);
+    fillCells($('#sheet-cells'), N, n, n - 1, true);
     $('#sh-next').onclick = function () {
       unlockAudio();
       if (last) openUnlock();
@@ -548,7 +571,7 @@
     var needStaff = state.fails[slot] >= CFG.FAILS_BEFORE_STAFF;
     showSheet(
       '<h3 class="sheet__title">顏色不太對，再試一次！</h3>' +
-      '<p class="sheet__msg">要找的是 <span class="hl">' + TEAM.colorName + '</span> 的海廢。試試看：拿近一點、讓它塞滿框、轉個角度避開反光或陰影。</p>' +
+      '<p class="sheet__msg">這一關要找 ' + hl(slotColorId(slot)) + ' 的海廢（' + slotColor(slot).hint + '）<br>試試看：拿近一點、讓它塞滿框、轉個角度避開反光或陰影。</p>' +
       debugLine(res) +
       '<div class="stack"><button class="pbtn" id="sh-retry">📷 再拍一次</button>' +
       (needStaff ? '<button class="pbtn pbtn--black" id="sh-staff">🙋 請工作人員協助</button>' : '') + '</div>'
@@ -565,7 +588,7 @@
     hideSheet();
     mcam.classList.remove('is-frozen');
     mBusy = false;
-    $('#m-slot').textContent = '第 ' + (currentSlot() + 1) + ' / ' + N + ' 個';
+    updateMissionLabel();
     if (!mStream) startMissionCam();
   }
 
@@ -618,13 +641,14 @@
     return c.toDataURL('image/jpeg', CFG.UPLOAD_JPEG_QUALITY);
   }
 
-  function enqueueUpload(canvas, slotNo, manual) {
+  // colorId 用來分資料夾：紅色照片存進原本的「紅隊」資料夾，以此類推（Apps Script 不用改）
+  function enqueueUpload(canvas, slotNo, manual, colorId) {
     if (!canvas) return;
     var ts = Date.now();
     var item = {
-      id: DEVICE_ID + '-' + TEAM_ID + '-' + slotNo + '-' + ts,
-      team: TEAM_ID,
-      teamName: TEAM.en + ' ' + TEAM.zh,
+      id: DEVICE_ID + '-' + colorId + '-' + slotNo + '-' + ts,
+      team: colorId,
+      teamName: COLORS[colorId].name,
       slot: slotNo,
       manual: !!manual,
       ts: ts,
@@ -729,9 +753,9 @@
   logoImg.src = 'assets/nissan-logo.png';
   var fontsReady = (function () {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
-    var txt = CFG.FILTER_TITLE || '級玩家';
+    var txt = (CFG.FILTER_SLOGANS || []).map(function (x) { return x.text.replace(/[{}]/g, ''); }).join('');
     return Promise.race([
-      Promise.all([document.fonts.load('900 100px "Noto Sans TC"', txt), document.fonts.load('700 50px "Noto Sans TC"', txt)]),
+      Promise.all([document.fonts.load('italic 900 74px "Noto Sans TC"', txt), document.fonts.load('900 74px "Noto Sans TC"', txt)]),
       new Promise(function (r) { setTimeout(r, 3000); })
     ]).catch(function () {});
   })();
@@ -799,7 +823,6 @@
     outlined(ctx, PX.cells('SPARK'), 980, 420, 8, 3);
     outlined(ctx, PX.cells('SPARK'), 70, 1300, 7, 3);
     outlined(ctx, PX.cells('SPARK'), 940, 1450, 5, 3);
-    PX.draw(ctx, PX.cells('E'), 110, 1590, 8, { shadow: { dx: 0.6, dy: 0.6 } });
 
     // 底部：白底像素海浪＋沙灘＋海廢
     var wave = PX.waveBand(90, 3), wy = 1920 - wave.h * 12;
@@ -810,12 +833,74 @@
     PX.draw(ctx, PX.cells('CAP'), 882, 1886, 5.5);
     PX.draw(ctx, PX.cells('BAG'), 934, 1836, 7);
 
+    // 標語對話框
+    if (CFG.FILTER_SLOGANS && CFG.FILTER_SLOGANS.length) sloganBox(ctx, CFG.FILTER_SLOGANS[sloganIdx % CFG.FILTER_SLOGANS.length]);
+
     ctx.restore();
+  }
+
+  /* ---------- 濾鏡標語：像素遊戲對話框 ----------
+   * text 裡用 {大括號} 包起來的字會變紅色 */
+  var sloganIdx = 0;
+  function cellsBox(cells) {
+    var b = { w: 0, h: 0 };
+    cells.forEach(function (c) { b.w = Math.max(b.w, c.x + 1); b.h = Math.max(b.h, c.y + 1); });
+    return b;
+  }
+  function sloganBox(ctx, S) {
+    var P = PX.PAL, fs = 74, SK = 0.18;
+    var parts = [];
+    S.text.replace(/\{([^}]*)\}|([^{]+)/g, function (m, red, normal) { parts.push(red !== undefined ? [red, 1] : [normal, 0]); });
+    ctx.font = 'italic 900 ' + fs + 'px ' + FONT_ZH;
+    var tw = 0; parts.forEach(function (p) { tw += ctx.measureText(p[0]).width; });
+    var iconW = 70, tailW = 70, padX = 36, gap = 20;
+    var w = padX * 2 + iconW + gap + tw + gap + tailW, h = 128;
+    if (w > 1000) { w = 1000; }
+    var x = Math.round((1080 - w) / 2), y = 1562;
+    // 陰影＋外框＋白底＋像素圓角
+    ctx.fillStyle = P.C; ctx.fillRect(x + 12, y + 12, w, h);
+    ctx.fillStyle = P.K; ctx.fillRect(x - 6, y - 6, w + 12, h + 12);
+    ctx.fillStyle = '#fff'; ctx.fillRect(x, y, w, h);
+    ctx.clearRect(x - 6, y - 6, 6, 6); ctx.clearRect(x + w, y - 6, 6, 6);
+    ctx.clearRect(x - 6, y + h, 6, 6); ctx.clearRect(x + w, y + h, 6, 6);
+    // 左上紅色小標籤
+    ctx.fillStyle = P.R; ctx.fillRect(x + 20, y - 22, 120, 28);
+    ctx.fillStyle = P.K; ctx.fillRect(x + 20, y - 22, 120, 4);
+    // 左側圖示
+    if (S.icon) {
+      var ic = PX.cells(S.icon), ib = cellsBox(ic);
+      var cs = Math.floor(Math.min(iconW / ib.w, 76 / ib.h));
+      PX.draw(ctx, ic, x + padX + (iconW - ib.w * cs) / 2, y + (h - ib.h * cs) / 2, cs);
+    }
+    // 文字（重點字紅色、斜體）
+    var tx = x + padX + iconW + gap, ty = y + h / 2 + fs * 0.36;
+    ctx.save();
+    ctx.translate(tx, ty); ctx.transform(1, 0, -SK, 1, 0, 0);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    var cx = 0;
+    parts.forEach(function (p) { ctx.fillStyle = p[1] ? P.R : P.K; ctx.fillText(p[0], cx, 0); cx += ctx.measureText(p[0]).width; });
+    ctx.restore();
+    // 右側圖示
+    var rx = tx + tw + gap;
+    if (S.tail === 'DOTS') {
+      ctx.strokeStyle = P.K; ctx.lineWidth = 3;
+      for (var i = 0; i < 3; i++) {
+        ctx.fillStyle = i < 2 ? P.G : P.L;
+        ctx.fillRect(rx + 2 + i * 23, y + h / 2 - 12, 17, 24); ctx.strokeRect(rx + 2 + i * 23, y + h / 2 - 12, 17, 24);
+      }
+    } else if (S.tail) {
+      var tc = PX.cells(S.tail), tb = cellsBox(tc);
+      var ts = Math.floor(Math.min(tailW / tb.w, 64 / tb.h));
+      PX.draw(ctx, tc, rx + (tailW - tb.w * ts) / 2, y + (h - tb.h * ts) / 2, ts);
+    }
+    // 右下紅色 ▼
+    var ax = x + w - 30, ay = y + h - 22;
+    ctx.fillStyle = P.R; ctx.fillRect(ax, ay, 14, 4); ctx.fillRect(ax + 3, ay + 4, 8, 4); ctx.fillRect(ax + 5, ay + 8, 4, 3);
   }
 
   var overlayCache = {};
   function overlay(W, H) {
-    var k = W + 'x' + H;
+    var k = W + 'x' + H + '#' + sloganIdx;
     if (!overlayCache[k]) {
       var c = document.createElement('canvas'); c.width = W; c.height = H;
       drawOverlay(c.getContext('2d'), W, H);
@@ -880,6 +965,18 @@
   $('#f-close').onclick = function () { show('home'); renderHome(); };
   $('#f-err-home').onclick = function () { show('home'); renderHome(); };
   $('#f-retry').onclick = startFilterCam;
+  function updateSloganBtn() {
+    var n = (CFG.FILTER_SLOGANS || []).length;
+    $('#f-slogan').style.display = n > 1 ? '' : 'none';
+    $('#f-slogan-n').textContent = (sloganIdx % Math.max(1, n) + 1) + '/' + n;
+  }
+  $('#f-slogan').onclick = function () {
+    if (recorder && recorder.state === 'recording') return;
+    sloganIdx = (sloganIdx + 1) % CFG.FILTER_SLOGANS.length;
+    updateSloganBtn(); sfx('tick');
+  };
+  updateSloganBtn();
+
   $('#f-flip').onclick = function () {
     if (recorder && recorder.state === 'recording') return;
     facing = facing === 'user' ? 'environment' : 'user';
@@ -950,6 +1047,7 @@
     recorder.start(250);
     sfx('click');
     recStart = Date.now();
+    $('#fcam').classList.add('is-rec');
     $('#f-shutter').classList.add('rec');
     $('#rec-bar').classList.add('show'); $('#rec-time').classList.add('show');
     var max = CFG.VIDEO_MAX_SECONDS * 1000;
@@ -962,6 +1060,7 @@
   }
   function endRecUI() {
     clearInterval(recTimer);
+    $('#fcam').classList.remove('is-rec');
     $('#f-shutter').classList.remove('rec');
     $('#rec-bar').classList.remove('show'); $('#rec-time').classList.remove('show');
     $('#rec-bar span').style.width = '0';

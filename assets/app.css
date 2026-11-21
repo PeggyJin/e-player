@@ -422,3 +422,29 @@ img, svg { display: block; }
 }
 .staff-hot.holding::after { width: 100%; transition: width 2s linear; }
 .footer__logo { padding: 6px 0; }
+
+/* ---------- 單一入口：三色任務 ---------- */
+.tri { display: grid; grid-template-columns: 1fr; gap: 4px; width: 34px; transform: skewX(10deg); }
+.tri i { display: block; height: 12px; border: 2px solid var(--black); }
+.mission-text .arrow { display: inline-block; margin: 0 4px; font-weight: 900; color: var(--black); }
+.mission-text .hl { margin: 2px 0; }
+.mission-tip b { color: var(--black); font-size: 17px; }
+.mission-tip .hl { font-size: 15px; padding: 0 6px; border-width: 2px; }
+.cell.labeled { position: relative; display: flex; align-items: center; justify-content: center; }
+.cell.labeled span { font-weight: 900; font-size: 18px; color: rgba(0,0,0,.18); }
+.cell.labeled.on span { color: rgba(255,255,255,.85); text-shadow: 0 0 2px rgba(0,0,0,.35); }
+.sheet__msg .hl { font-size: 16px; padding: 0 6px; border-width: 2px; }
+
+/* 濾鏡：換標語按鈕 */
+.slogan-btn {
+  position: absolute; left: 50%; transform: translateX(-50%); z-index: 6;
+  bottom: calc(var(--safe-b) + 132px);
+  background: #fff; color: var(--black); border: 4px solid var(--black);
+  box-shadow: 4px 4px 0 var(--red); padding: 8px 18px; font-weight: 900; font-size: 17px;
+  display: flex; align-items: center; gap: 8px; white-space: nowrap;
+}
+.slogan-btn:active { transform: translate(calc(-50% + 4px), 4px); box-shadow: none; }
+.slogan-btn small { font-family: var(--pixel); font-size: 10px; color: var(--red); }
+.fcam.is-rec .slogan-btn { display: none; }
+.mission-text .hl { font-size: 19px; padding: 0 7px; }
+.mission-text .arrow { margin: 0 3px; }

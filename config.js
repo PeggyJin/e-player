@@ -1,5 +1,5 @@
 /* =========================================================
- *  NISSAN E級玩家｜駕馭新動力，E起淨海趣！
+ *  NISSAN E級玩家｜駕馭新動力，e起淨海趣！
  *  ★ 活動設定檔：要改的東西幾乎都在這裡 ★
  *  修改時只改「冒號右邊」的值，引號、逗號請保留。
  * ========================================================= */
@@ -7,7 +7,7 @@ window.EPLAYER_CONFIG = {
 
   /* ---------- 活動基本資料 ---------- */
   EVENT_TITLE: 'E級玩家',
-  EVENT_SLOGAN: '駕馭新動力，E起淨海趣！',
+  EVENT_SLOGAN: '駕馭新動力，e起淨海趣！',
 
   /* ---------- 工作人員通關碼（三隊共用） ----------
    * 用途：①拍照連續失敗 2 次時人工放行 ②重設手機進度
@@ -20,7 +20,6 @@ window.EPLAYER_CONFIG = {
   UPLOAD_URL: 'https://script.google.com/macros/s/AKfycbyTwszm8ux4S7wCFQyUCKNJUXDuBKXHA3uvue2F13RoA2DVEHujjd5OSTDoI9pugdZ2/exec',
 
   /* ---------- 任務設定 ---------- */
-  MISSION_COUNT: 3,          // 要找幾個（電量條格數）
   FAILS_BEFORE_STAFF: 2,     // 同一格連續失敗幾次後出現「請工作人員協助」
   UPLOAD_LONG_EDGE: 1280,    // 上傳照片長邊像素
   UPLOAD_JPEG_QUALITY: 0.82, // 上傳照片 JPEG 品質（0～1）
@@ -66,41 +65,31 @@ window.EPLAYER_CONFIG = {
     }
   },
 
-  /* ---------- 三隊設定 ----------
-   * url：部署到 GitHub Pages 後的網址，給 qrcodes.html 產生 QR code 用。 */
-  TEAMS: {
-    yellow: {
-      en: 'Electric',
-      zh: '閃電E隊',
-      icon: 'BOLT',     // 像素圖示：BOLT 閃電／STAR 星星／LEAF 葉子
-      colorName: '黃色',
-      color: '#F2C200',      // 隊伍代表色（任務格、按鈕）
-      textOnColor: '#1C1C1C',// 隊色按鈕上的字色
-      url: ''
-    },
-    red: {
-      en: 'Entertainment',
-      zh: '活力E隊',
-      icon: 'STAR',
-      colorName: '紅色',
-      color: '#D7191F',
-      textOnColor: '#FFFFFF',
-      url: ''
-    },
-    green: {
-      en: 'Ecosystem',
-      zh: '生態E隊',
-      icon: 'LEAF',
-      colorName: '綠色',
-      color: '#64EA00',
-      textOnColor: '#1C1C1C',
-      url: ''
-    }
+  /* ---------- 任務顏色與順序 ----------
+   * MISSION_ORDER：參加者要依序找的顏色（目前：紅 → 黃 → 綠）
+   * COLORS：每個顏色的名稱、代表色、按鈕字色、找不到時的小提示 */
+  MISSION_ORDER: ['red', 'yellow', 'green'],
+  COLORS: {
+    red:    { name: '紅色', color: '#D7191F', textOnColor: '#FFFFFF', hint: '正紅、暗紅、褪色的粉紅都可以；橘色要留到黃色關卡喔！' },
+    yellow: { name: '黃色', color: '#F2C200', textOnColor: '#1C1C1C', hint: '黃色或橘色都可以！' },
+    green:  { name: '綠色', color: '#64EA00', textOnColor: '#1C1C1C', hint: '綠色、淺綠、藍綠都可以；海草和植物不算喔！' }
   },
+
+  /* ---------- 濾鏡標語（參加者可在濾鏡相機按「換標語」切換） ----------
+   * text：用 {大括號} 包起來的字會變成紅色
+   * icon／tail：標語前後的像素圖示（PIN 定位、SUN 太陽、BOLT 閃電、BAG 回收袋、SPARK 閃光、DOTS 進度點） */
+  FILTER_SLOGANS: [
+    { icon: 'PIN',  text: '我在{大甲}天氣晴', tail: 'SUN' },
+    { icon: 'BOLT', text: 'e級玩家{淨灘中}', tail: 'DOTS' },
+    { icon: 'BAG',  text: 'e起把{海}撿乾淨', tail: 'SPARK' }
+  ],
+
+  /* ---------- 網址（給 qrcodes.html 產生 QR code 用；留空會自動抓目前網址） ---------- */
+  SITE_URL: '',
 
   /* ---------- 頁面文字 ---------- */
   TEXT: {
-    missionLine: '在淨灘區域找到 {n} 個 {color} 的海廢並拍下來',
+    missionLine: '依序在淨灘區域找到<br>{colors}<br>三種顏色的海廢並拍下',
     doneMessage: '用濾鏡拍照打卡，活動結束後到報到台兌換小禮物！'
   }
 };
