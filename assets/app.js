@@ -1,11 +1,11 @@
 /* =========================================================
- *  NISSAN E級玩家｜主程式（單一入口）
+ *  NISSAN e級玩家｜主程式（單一入口）
  *  流程：首頁 → 任務相機（依序找紅→黃→綠）→ 判定 → 充電完成動畫 → 濾鏡相機 → 預覽
  * ========================================================= */
 (function () {
   'use strict';
 
-  var APP_VERSION = '2026.11.21-再玩一次';  // 程式版本（測試模式左下角會顯示）
+  var APP_VERSION = '2026.11.23-新主視覺';  // 程式版本（測試模式左下角會顯示）
   var CFG = window.EPLAYER_CONFIG;
   var ORDER = CFG.MISSION_ORDER;   // 依序要找的顏色，例如 ['red','yellow','green']
   var COLORS = CFG.COLORS;
@@ -81,7 +81,7 @@
   app.innerHTML =
     /* ---------- 首頁 ---------- */
     '<section id="s-home" class="screen"><div class="wrap">' +
-      '<div class="kv-wrap"><img class="kv" src="assets/kv.webp" alt="NISSAN E級玩家｜' + CFG.EVENT_SLOGAN + '"></div>' +
+      '<div class="kv-wrap"><img class="kv" src="assets/kv.webp" alt="NISSAN e級玩家｜' + CFG.EVENT_SLOGAN + '"></div>' +
       '<div class="home-body">' +
         '<div class="team-badge"><div class="team-badge__icon">' + badgeIcon + '</div>' +
           '<div class="team-badge__text"><div class="team-badge__en">MISSION · ' + N + ' COLORS</div>' +

@@ -73,7 +73,7 @@ img, svg { display: block; }
 .stripes--bl i:nth-child(3) { bottom: 48px; left: 10px; width: 60px; height: 4px; background: var(--black); }
 
 /* ---------- 首頁 ---------- */
-.kv { width: 100%; height: auto; aspect-ratio: 1671 / 941; background: #fff; }
+.kv { width: 100%; height: auto; aspect-ratio: 1670 / 941; background: #fff; }
 .home-body { padding: 6px 20px 0; }
 
 .team-badge {
