@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '2026.11.23-新主視覺';  // 程式版本（測試模式左下角會顯示）
+  var APP_VERSION = '2026.11.23-主視覺v3.1';  // 程式版本（測試模式左下角會顯示）
   var CFG = window.EPLAYER_CONFIG;
   var ORDER = CFG.MISSION_ORDER;   // 依序要找的顏色，例如 ['red','yellow','green']
   var COLORS = CFG.COLORS;

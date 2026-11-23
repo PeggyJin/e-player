@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>e級玩家｜活動 QR code（列印用）</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  body { -webkit-user-select: text; user-select: text; background: #f4f2ee; }
+  .bar { max-width: 720px; margin: 0 auto; padding: 20px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .bar h1 { font-size: 22px; margin: 0; flex: 1 1 100%; }
+  .bar .pbtn { width: auto; min-height: 48px; font-size: 16px; box-shadow: 4px 4px 0 var(--black); }
+  .note { max-width: 720px; margin: 0 auto 10px; padding: 0 20px; font-size: 14px; color: #555; }
+  .note.warn { color: var(--red); font-weight: 700; }
+  .poster { width: 560px; max-width: 94vw; margin: 0 auto 40px; background: #fff; border: 5px solid var(--black); box-shadow: 8px 8px 0 var(--champ); text-align: center; padding-bottom: 22px; }
+  .poster .kv { width: 100%; }
+  .task { font-size: 22px; font-weight: 900; margin: 18px 12px 6px; line-height: 1.6; }
+  .task .hl { font-size: 22px; }
+  .task .arrow { margin: 0 4px; }
+  .qr { width: 62%; margin: 16px auto 8px; aspect-ratio: 1; padding: 12px; border: 6px solid var(--black); box-shadow: 8px 8px 0 var(--red); background: #fff; }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .qr.empty { border-style: dashed; color: #999; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .scan { display: inline-block; margin-top: 16px; background: var(--red); color: #fff; border: 4px solid var(--black); padding: 6px 22px; font-size: 22px; font-weight: 900; font-style: italic; transform: skewX(-12deg); }
+  .scan span { display: inline-block; transform: skewX(12deg); }
+  .hint { font-size: 15px; margin-top: 10px; font-weight: 700; color: #333; }
+  .url { font-size: 11px; color: #888; word-break: break-all; padding: 4px 12px 0; }
+  @media print {
+    body { background: #fff; }
+    .bar, .note { display: none; }
+    .poster { box-shadow: none; width: 180mm; max-width: none; margin: 0 auto; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @page { size: A4; margin: 12mm; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>NISSAN e級玩家｜活動 QR code</h1>
+  <button class="pbtn pbtn--red" onclick="window.print()">🖨 列印</button>
+</div>
+<p class="note" id="note"></p>
+<div class="poster" id="poster"></div>
+
+<script src="config.js"></script>
+<script src="assets/vendor/qrcode.js"></script>
+<script>
+(function () {
+  var CFG = window.EPLAYER_CONFIG;
+  var here = location.href.split('#')[0].split('?')[0];
+  var url = CFG.SITE_URL || '';
+  var derived = false;
+  if (!url && /^https:/.test(here)) { url = here.replace(/qrcodes\.html$/, ''); derived = true; }
+
+  function hl(id) { var c = CFG.COLORS[id]; return '<span class="hl" style="background:' + c.color + ';color:' + c.textOnColor + '">' + c.name + '</span>'; }
+  var chain = CFG.MISSION_ORDER.map(hl).join('<span class="arrow">→</span>');
+
+  var qrHtml;
+  if (url) {
+    // 加上 openExternalBrowser=1：用 LINE 掃描時會自動改用外部瀏覽器開啟（相機才能用）
+    var full = url + (url.indexOf('?') > -1 ? '&' : '?') + 'openExternalBrowser=1';
+    var qr = qrcode(0, 'Q'); qr.addData(full); qr.make();
+    qrHtml = '<div class="qr">' + qr.createSvgTag({ cellSize: 8, margin: 0, scalable: true }) + '</div><div class="url">' + full + '</div>';
+  } else {
+    qrHtml = '<div class="qr empty">尚未設定網址<br>請用 GitHub Pages 的網址打開這一頁</div>';
+  }
+  document.getElementById('poster').innerHTML =
+    '<img class="kv" src="assets/kv.webp" alt="NISSAN e級玩家">' +
+    '<div class="task">任務：依序在淨灘區域找到<br>' + chain + '<br>三種顏色的海廢並拍下</div>' +
+    qrHtml +
+    '<div class="scan"><span>📷 手機相機掃描，立即開始！</span></div>' +
+    '<div class="hint">請用 Safari（iPhone）或 Chrome（Android）開啟・不需下載 App</div>';
+
+  var note = document.getElementById('note');
+  if (!url) { note.className = 'note warn'; note.textContent = '⚠ 還沒有網址。部署到 GitHub Pages 後，用網址打開這一頁就會自動產生。'; }
+  else note.textContent = (derived ? '已依照這一頁的網址自動產生。' : '使用 config.js 的 SITE_URL。') + '列印前請先用手機掃描確認一次。';
+})();
+</script>
+</body>
+</html>
