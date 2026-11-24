@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  var APP_VERSION = '2026.11.23-主視覺v3.1';  // 程式版本（測試模式左下角會顯示）
+  var APP_VERSION = '2026.11.24-拍照說明v2';  // 程式版本（測試模式左下角會顯示）
   var CFG = window.EPLAYER_CONFIG;
   var ORDER = CFG.MISSION_ORDER;   // 依序要找的顏色，例如 ['red','yellow','green']
   var COLORS = CFG.COLORS;
@@ -139,6 +139,7 @@
       '<div class="unlock__pct" id="u-pct">0%</div>' +
       '<h2 class="unlock__title">充電完成！</h2>' +
       '<div class="unlock__sub">濾鏡解鎖！</div>' +
+      '<p class="filter-hint">' + CFG.TEXT.filterHint + '</p>' +
       '<div class="unlock__cta"><button class="pbtn pbtn--red" id="u-go">📸 開啟濾鏡相機</button></div>' +
       '<div class="burst" id="u-burst"></div>' +
     '</div></section>' +
@@ -238,7 +239,7 @@
     if (n >= N && state.unlocked) {
       // 三關都完成：進濾鏡，或選擇再玩一次
       $('#home-ribbon').innerHTML = '<small>CLEAR</small>任務完成';
-      $('#home-tip').textContent = CFG.TEXT.doneMessage;
+      $('#home-tip').innerHTML = '<span class="home-hint">📸 ' + CFG.TEXT.filterHint + '</span>' + CFG.TEXT.doneMessage;
       btn.textContent = '📸 進入濾鏡相機';
       btn2.textContent = '🔄 再玩一次'; btn2.hidden = false; btn2.dataset.act = 'replay';
     } else if (n >= N) {

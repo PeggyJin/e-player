@@ -73,7 +73,7 @@ img, svg { display: block; }
 .stripes--bl i:nth-child(3) { bottom: 48px; left: 10px; width: 60px; height: 4px; background: var(--black); }
 
 /* ---------- 首頁 ---------- */
-.kv { width: 100%; height: auto; aspect-ratio: 1670 / 941; background: #fff; }
+.kv { width: 100%; height: auto; aspect-ratio: 1 / 1; background: #fff; }
 .home-body { padding: 6px 20px 0; }
 
 .team-badge {
@@ -473,3 +473,11 @@ img, svg { display: block; }
 .fbar__row .fclose { width: 48px; height: 48px; flex: 0 0 48px; font-size: 18px; border-width: 3px; }
 .fbar__row .mode-toggle, .fbar__row .flip { width: 88px; }
 .fbar__row .shutter { width: 84px; height: 84px; }
+
+/* 解鎖濾鏡後的拍照說明（純文字，不做成框，避免看起來像按鈕） */
+.filter-hint {
+  margin: 20px 0 0; color: #444; font-size: 19px; font-weight: 700; line-height: 1.6; text-align: center;
+  opacity: 0;
+}
+.unlock.done .filter-hint { opacity: 1; transition: opacity .3s steps(3) .45s; }
+.home-hint { display: block; margin-bottom: 8px; color: var(--black); font-size: 17px; font-weight: 900; }
