@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#ffffff">
+<meta name="format-detection" content="telephone=no">
+<title>NISSAN e級玩家｜駕馭新動力・e起淨灘趣！</title>
+<script>
+  // 每分鐘換一次版本號，手機就不會一直用暫存的舊程式
+  window.EPLAYER_V = Math.floor(Date.now() / 60000);
+  document.write('<link rel="stylesheet" href="assets/app.css?v=' + window.EPLAYER_V + '">');
+</script>
+</head>
+<body>
+<!-- 遊戲本體：參加者掃 QR code 會直接進到這一頁 -->
+<div id="app"></div>
+<script>
+  ['config.js', 'assets/pixel.js', 'assets/app.js'].forEach(function (src) {
+    document.write('<script src="' + src + '?v=' + window.EPLAYER_V + '"><\/script>');
+  });
+</script>
+</body>
+</html>
