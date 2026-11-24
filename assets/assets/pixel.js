@@ -133,6 +133,28 @@
       'K.KKK....',
       'K........'
     ],
+    PIN: [
+      '..RRRR..',
+      '.RRRRRR.',
+      'RRRWWRRR',
+      'RRWWWWRR',
+      'RRRWWRRR',
+      '.RRRRRR.',
+      '..RRRR..',
+      '...RR...',
+      '...RR...'
+    ],
+    SUN: [
+      '....Y....',
+      '.Y..Y..Y.',
+      '...YYY...',
+      '..YYYYY..',
+      'YYYYYYYYY',
+      '..YYYYY..',
+      '...YYY...',
+      '.Y..Y..Y.',
+      '....Y....'
+    ],
     SPARK: [
       '..G..',
       '..G..',
